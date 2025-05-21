@@ -1,2 +1,2 @@
-# Example
-An example greeter plugin
+# Trouble Brewing Rum
+Trouble brewing is kind of awesome (⌐■_■)

@@ -1,4 +1,4 @@
-package com.example;
+package com.RumRunning;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
@@ -14,26 +14,26 @@ import net.runelite.client.plugins.PluginDescriptor;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Example"
+	name = "Trouble Brewing Rum"
 )
-public class ExamplePlugin extends Plugin
+public class TroubleBrewingPlugin extends Plugin
 {
 	@Inject
 	private Client client;
 
 	@Inject
-	private ExampleConfig config;
+	private TroubleBrewingConfig config;
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Example started!");
+		log.info(" ##### Plugin started! ##### ");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("Example stopped!");
+		log.info(" ##### Plugin stopped! ##### ");
 	}
 
 	@Subscribe
@@ -46,8 +46,8 @@ public class ExamplePlugin extends Plugin
 	}
 
 	@Provides
-	ExampleConfig provideConfig(ConfigManager configManager)
+	TroubleBrewingConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(ExampleConfig.class);
+		return configManager.getConfig(TroubleBrewingConfig.class);
 	}
 }
