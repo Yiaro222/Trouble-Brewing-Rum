@@ -32,7 +32,6 @@ public class TroubleBrewingOverlay extends Overlay {
         this.modelOutlineRenderer = modelOutlineRenderer;
         setPosition(OverlayPosition.DYNAMIC);
         setLayer(OverlayLayer.ABOVE_SCENE);
-        setPriority(OverlayPriority.HIGH);
     }
 
     @Override
@@ -42,7 +41,7 @@ public class TroubleBrewingOverlay extends Overlay {
             modelOutlineRenderer.drawOutline(renderableJunglePlant, 3, Color.ORANGE, 1);
             //graphics.draw(renderableJunglePlant.getConvexHull());
 
-        }else {
+        } else {
             return null;
         }
 

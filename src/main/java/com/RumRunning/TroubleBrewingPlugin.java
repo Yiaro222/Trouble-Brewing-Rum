@@ -79,6 +79,8 @@ public class TroubleBrewingPlugin extends Plugin
 		if (gameObject.getId() == 1204 && gameObject.getWorldLocation().getX() == 3815 && gameObject.getWorldLocation().getY() == 3024){
 			log.info("Plant unfound");
 			TroubleBrewingOverlay.renderableJunglePlant = null;
+		} else {
+			TroubleBrewingOverlay.renderableJunglePlant = null;
 		}
 	}
 
