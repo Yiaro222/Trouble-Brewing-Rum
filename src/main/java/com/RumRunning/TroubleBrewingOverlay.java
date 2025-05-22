@@ -29,9 +29,9 @@ extends      Overlay
 	private final ItemManager          itemManager;
 	
 	@Setter
-	private GameObject renderableJunglePlant;
+	private GameObject RenderableHopper;
 	
-	private final BufferedImage tinderboxIcon;
+	private final BufferedImage waterbucketIcon;
 	
 	
 	@Inject
@@ -50,8 +50,8 @@ extends      Overlay
 		
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
-		
-		tinderboxIcon = itemManager.getImage(ItemID.TINDERBOX);
+
+		waterbucketIcon = itemManager.getImage(1929);
 	 }
 	
 	@Override
@@ -62,13 +62,13 @@ extends      Overlay
 		Point  overheadTextTestPosition;
 		Point  iconTestPosition;
 		
-		if (renderableJunglePlant == null)
+		if (RenderableHopper == null)
 		{
-			log.info("NOTHING TO DRAW");
+			//log.info("NOTHING TO DRAW");
 			return null;
 		}
 		
-		log.info("DRAWING PLANT");
+		//log.info("DRAWING PLANT");
 		
 		localPlayerData          = client.getLocalPlayer();
 		overheadTextTestPosition = localPlayerData.getCanvasTextLocation
@@ -79,19 +79,19 @@ extends      Overlay
 		iconTestPosition         = Perspective.getCanvasImageLocation
 		(
 			client,
-			renderableJunglePlant.getLocalLocation(),
-			tinderboxIcon, 150
+			RenderableHopper.getLocalLocation(),
+			waterbucketIcon, 150
 		);
 		
-		modelOutlineRenderer.drawOutline(renderableJunglePlant, 3,
+		modelOutlineRenderer.drawOutline(RenderableHopper, 3,
 		                                 config.ColourPicking1(), 1);
-		graphics.draw(renderableJunglePlant.getConvexHull());
+		graphics.draw(RenderableHopper.getConvexHull());
 		
 		modelOutlineRenderer.drawOutline(localPlayerData, 3, Color.MAGENTA,1);
 		OverlayUtil.renderTextLocation(graphics, overheadTextTestPosition,
 		                               "Certified Rum Runner", Color.MAGENTA);
 		
-		graphics.drawImage(tinderboxIcon,
+		graphics.drawImage(waterbucketIcon,
 		                   iconTestPosition.getX(), iconTestPosition.getY(),
 		                   null);
 		

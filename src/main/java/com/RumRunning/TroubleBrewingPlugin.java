@@ -63,7 +63,7 @@ extends      Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-			overlay.setRenderableJunglePlant(null);
+			overlay.setRenderableHopper(null);
 		}
 	}
 	
@@ -73,11 +73,12 @@ extends      Plugin
 	{
 		final GameObject gameObject = event.getGameObject();
 		
-		if (gameObject.getId() == 1204                   &&
-		    gameObject.getWorldLocation().getX() == 3815 &&
-		    gameObject.getWorldLocation().getY() == 3024)
+		if (gameObject.getId() == 15847                  	 &&
+			gameObject.getWorldLocation().getX() 	 == 3811 &&
+			gameObject.getWorldLocation().getY() 	 == 3000 &&
+			gameObject.getWorldLocation().getPlane() == 2)
 		{
-			overlay.setRenderableJunglePlant(gameObject);
+			overlay.setRenderableHopper(gameObject);
 		}
 	}
 	
@@ -87,11 +88,12 @@ extends      Plugin
 	{
 		final GameObject gameObject = event.getGameObject();
 		
-		if (gameObject.getId() == 1204                   &&
-		    gameObject.getWorldLocation().getX() == 3815 &&
-		    gameObject.getWorldLocation().getY() == 3024)
+		if (gameObject.getId() == 15847                 	 &&
+		    gameObject.getWorldLocation().getX() 	 == 3811 &&
+		    gameObject.getWorldLocation().getY() 	 == 3000 &&
+			gameObject.getWorldLocation().getPlane() == 2)
 		{
-			overlay.setRenderableJunglePlant(null);
+			overlay.setRenderableHopper(null);
 		}
 	}
 	
