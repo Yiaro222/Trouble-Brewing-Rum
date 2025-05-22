@@ -1,8 +1,12 @@
+
 package com.RumRunning;
 
 import com.google.inject.Provides;
+
 import javax.inject.Inject;
+
 import lombok.extern.slf4j.Slf4j;
+
 import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
@@ -22,13 +26,16 @@ public class TroubleBrewingPlugin
 extends      Plugin
 {
 	@Inject
-	private Client                client;
+	private Client         client;
 	@Inject
-	private TroubleBrewingConfig  config;
+	private OverlayManager overlayManager;
+	
 	@Inject
-	private TroubleBrewingOverlay troubleBrewingOverlay;
+	private TroubleBrewingConfig           config;
 	@Inject
-	private OverlayManager        overlayManager;
+	private TroubleBrewingOverlay          overlay;
+	@Inject
+	private TroubleBrewingInterfaceOverlay interfaceOverlay;
 	
 	
 	
@@ -37,7 +44,8 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
-		overlayManager.add(troubleBrewingOverlay);
+		overlayManager.add(overlay);
+		overlayManager.add(interfaceOverlay);
 	}
 	
 	@Override
@@ -45,6 +53,8 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
+		overlayManager.remove(overlay);
+		overlayManager.remove(interfaceOverlay);
 	}
 	
 	@Subscribe
@@ -53,7 +63,7 @@ extends      Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-			troubleBrewingOverlay.setRenderableJunglePlant(null);
+			overlay.setRenderableJunglePlant(null);
 		}
 	}
 	
@@ -67,7 +77,7 @@ extends      Plugin
 		    gameObject.getWorldLocation().getX() == 3815 &&
 		    gameObject.getWorldLocation().getY() == 3024)
 		{
-			troubleBrewingOverlay.setRenderableJunglePlant(gameObject);
+			overlay.setRenderableJunglePlant(gameObject);
 		}
 	}
 	
@@ -81,7 +91,7 @@ extends      Plugin
 		    gameObject.getWorldLocation().getX() == 3815 &&
 		    gameObject.getWorldLocation().getY() == 3024)
 		{
-			troubleBrewingOverlay.setRenderableJunglePlant(null);
+			overlay.setRenderableJunglePlant(null);
 		}
 	}
 	
@@ -92,4 +102,6 @@ extends      Plugin
 		return configManager.getConfig(TroubleBrewingConfig.class);
 	}
 }
+
+
 

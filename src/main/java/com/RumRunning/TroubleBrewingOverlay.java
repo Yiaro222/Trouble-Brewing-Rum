@@ -1,25 +1,20 @@
+
 package com.RumRunning;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
 import javax.inject.Inject;
 
-import com.google.inject.Provides;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-
 import lombok.Setter;
+
 import net.runelite.api.Point;
 import net.runelite.api.*;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
-import net.runelite.api.TileObject;
-import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
-import net.runelite.api.events.*;
 
 
 
@@ -41,7 +36,7 @@ extends      Overlay
 	
 	@Inject
 	private
-	TroubleBrewingOverlay(Client client,
+	TroubleBrewingOverlay(Client               client,
 	                      TroubleBrewingPlugin plugin,
 	                      TroubleBrewingConfig config,
 	                      ModelOutlineRenderer modelOutlineRenderer,
@@ -75,20 +70,21 @@ extends      Overlay
 		
 		log.info("DRAWING PLANT");
 		
-		localPlayerData = client.getLocalPlayer();
+		localPlayerData          = client.getLocalPlayer();
 		overheadTextTestPosition = localPlayerData.getCanvasTextLocation
 		(
 			graphics, "HeightOffset",
 			localPlayerData.getLogicalHeight() + 40
 		);
-		iconTestPosition = Perspective.getCanvasImageLocation
+		iconTestPosition         = Perspective.getCanvasImageLocation
 		(
 			client,
 			renderableJunglePlant.getLocalLocation(),
 			tinderboxIcon, 150
 		);
 		
-		modelOutlineRenderer.drawOutline(renderableJunglePlant, 3, Color.ORANGE, 1);
+		modelOutlineRenderer.drawOutline(renderableJunglePlant, 3,
+		                                 config.ColourPicking1(), 1);
 		graphics.draw(renderableJunglePlant.getConvexHull());
 		
 		modelOutlineRenderer.drawOutline(localPlayerData, 3, Color.MAGENTA,1);
@@ -102,3 +98,6 @@ extends      Overlay
 		return null;
 	 }
 }
+
+
+
