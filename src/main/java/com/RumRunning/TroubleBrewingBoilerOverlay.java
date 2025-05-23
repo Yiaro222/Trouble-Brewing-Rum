@@ -15,6 +15,7 @@ import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
@@ -44,20 +45,11 @@ extends      Overlay
 	
 	private GameObject boilers[] = { null, null, null };
 	
-	private boolean IN_LOBBY_TRIGGERED = false;
-	
 	/*
 	 * TODO:
-	 * > Highlight empty boilers red (have an option for outline/hull/click box)
-	 * >> Highlight orange for yellow for unlit ("Logs")
-	 * >> They should all turn red if the pipes have been saboed
-	 * > Draw the icons after the outline bcus if its filled then you can't see the icons
-	 * > Determine the team and choose the correct boilers from that
-	 * > only draw inside tb on plane 0
-	 * > I believe these are the interface IDs - https://github.com/runelite/runelite/blob/b95ceaf6a62f9a5c4ef1b0af695f9f8df74bd043/runelite-api/src/main/java/net/runelite/api/widgets/WidgetID.java#L191
-	 * >> I would have expected there to be mulitple tho, like the resource UI "feelings" different to the scroll one
-	 * > I believe I get the UI by calling Widget w = client.getWidget(...) but the args are confusing to me
-	 * > 
+	 * > The boilers should all turn/flash red if the pipes have been saboed.
+	 * > Have options for colour thresholds. some people want red 0-4, 5-9 yellow
+	 *   and green at 10.
 	 * */
 	
 	
@@ -78,7 +70,6 @@ extends      Overlay
 		
 		redSideLocation  = new WorldPoint(3815, 3000, 0);
 		blueSideLocation = new WorldPoint(3815, 2950, 0);
-		onRedTeam = true; // TEMP
 		
 		logsIcon      = itemManager.getImage(ItemID.LOGS);
 		tinderboxIcon = itemManager.getImage(ItemID.TINDERBOX);
@@ -88,63 +79,82 @@ extends      Overlay
 	public Dimension
 	render(Graphics2D graphics)
 	{
-		//if (!(player.getWorldLocation().getRegionID() == 15150 &&
-		//      player.getWorldLocation().getPlane()    == 0))
+		final Player player    = client.getLocalPlayer();
+		final int    DRAW_DIST = 40; /* TODO: find how to properly do this */
+		      Widget widget;
+		      int    logCount;
+		
+		if (!(player.getWorldLocation().getRegionID() == 15150 &&
+		      player.getWorldLocation().getPlane()    == 0))
 		{
-			//return(null);
+			return(null);
 		}
 		
-		if (IN_LOBBY_TRIGGERED)
-		{
-			Widget widget;
-
-			widget = client.getWidget(InterfaceID.BREW_WAITING_ROOM_OVERLAY,
-			                          InterfaceID.BrewWaitingRoomOverlay.TIME_TEXT);
-			if (widget != null)
-			{
-				log.info(widget.getText());
-			}
-			else
-			{
-				log.info("could not find text");
-			}
-		}
+		onRedTeam = client.getItemContainer(InventoryID.EQUIPMENT)
+		                  .getItem(EquipmentInventorySlot.HEAD
+		                  .getSlotIdx()).getId() == ItemID.PIRATE_HAT;
 		
 		for (int i = 0; i < 3; ++i)
 		{
 			Color colour;
 			Point pos;
+			int   dist;
 			
 			if (boilers[i] == null) continue;
-
+			
+			/* Don't draw if they're out of view */
+			dist = boilers[i].getWorldLocation().distanceTo(player.getWorldLocation());
+			if (dist > DRAW_DIST) continue;
+			
 			colour = Color.RED;
-			if (boilers[i].getId() == BOILER_EMPTY_IDS[i])
+			if      (boilers[i].getId() == BOILER_HAS_LOG_IDS[i]) colour = Color.YELLOW;
+			else if (boilers[i].getId() == BOILER_LIT_IDS    [i]) colour = Color.GREEN;
+			
+			DrawHighlightedGameObject(graphics, boilers[i], config.highlightType(), colour);
+			
+			if (config.displayBoilerIcons() &&
+			    boilers[i].getId() == BOILER_EMPTY_IDS[i])
 			{
 				if (config.displayBoilerIcons())
 				{
 					pos = Perspective.getCanvasImageLocation(client,
 					                                         boilers[i].getLocalLocation(),
 					                                         tinderboxIcon, 150);
-					graphics.drawImage(logsIcon, pos.getX(), pos.getY(), null);
+					if (pos != null)
+					{
+						graphics.drawImage(logsIcon, pos.getX(), pos.getY(), null);
+					}
 				}
 			}
-			else if (boilers[i].getId() == BOILER_HAS_LOG_IDS[i])
+			else if (config.displayBoilerIcons() &&
+			         boilers[i].getId() == BOILER_HAS_LOG_IDS[i])
 			{
-				colour = Color.YELLOW;
 				if (config.displayBoilerIcons())
 				{
 					pos = Perspective.getCanvasImageLocation(client,
 					                                         boilers[i].getLocalLocation(),
 					                                         logsIcon, 150);
-					graphics.drawImage(tinderboxIcon, pos.getX(), pos.getY(), null);
+					if (pos != null)
+					{
+						graphics.drawImage(tinderboxIcon, pos.getX(), pos.getY(), null);
+					}
 				}
 			}
-			else if (boilers[i].getId() == BOILER_LIT_IDS[i])
-			{
-				colour = Color.GREEN;
-			}
 			
-			DrawHighlightedGameObject(graphics, boilers[i], config.highlightType(), colour);
+			if (!config.displayBoilerLogCount()) continue;
+			widget = client.getWidget(InterfaceID.BrewOverlay.BOILER1_COUNT + i);
+			pos    = boilers[i].getCanvasTextLocation(graphics, "00/00", 0);
+			if (widget != null && pos != null)
+			{
+				/* to centre better */
+				pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
+				/* Do this really have to be called every render call?... */
+				graphics.setFont(new Font(FontManager.getRunescapeFont().getName(),
+				                          Font.PLAIN, config.fontSize()));
+				graphics.setColor(config.fontColour());
+				logCount = Integer.parseInt(widget.getText());
+				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10", Color.GRAY);
+			}
 		}
 		
 		return(null);
@@ -191,9 +201,6 @@ extends      Overlay
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-//			boolean isBlueTeam = client.getItemContainer(InventoryID.EQUIPMENT)
-//					.getItem(EquipmentInventorySlot.HEAD
-//					.getSlotIdx()).getId() == ItemID.PIRATE_BANDANA_8949;
 			for (int i = 0; i < 3; ++i)
 			{
 				boilers[i] = null;
@@ -205,9 +212,11 @@ extends      Overlay
 	gameObjectSpawned(GameObjectSpawned event)
 	{
 		final GameObject gameObject = event.getGameObject();
-		final int dist = gameObject.getWorldLocation().distanceTo(redSideLocation);
+		final int dist = onRedTeam ?
+		                 gameObject.getWorldLocation().distanceTo(redSideLocation) :
+		                 gameObject.getWorldLocation().distanceTo(blueSideLocation);
 		
-		if (dist > 20) return; // TEMP: ONLY DRAW RED SIDE FOR NOW
+		if (dist > 20) return;
 		
 		for (int i = 0; i < 3; ++i)
 		{
@@ -229,22 +238,6 @@ extends      Overlay
 				boilers[i] = null;
 			}
 		}
-	}
-	
-	public void
-	widgetLoaded(WidgetLoaded event)
-	{
-		if (event.getGroupId() == InterfaceID.BREW_WAITING_ROOM_OVERLAY)
-		{
-			log.info("IN LOBBY");
-			IN_LOBBY_TRIGGERED = true;
-		}
-	}
-	
-	public void
-	widgetClosed(WidgetClosed event)
-	{
-		//
 	}
 }
 

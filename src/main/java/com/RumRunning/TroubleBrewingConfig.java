@@ -23,39 +23,10 @@ extends          Config
 	)
 	String BaseSection = "Base";
 	
-	@ConfigSection
-	(
-		name            = "Resources",
-		description     = "Resource Section",
-		position        = 1,
-		closedByDefault = false
-	)
-	String ResourceSection = "Resources";
-	
-	@ConfigSection
-	(
-		name            = "Information",
-		description     = "Information Section",
-		position        = 2,
-		closedByDefault = false
-	)
-	String InformationSection = "Information";
-	
-	@ConfigSection
-	(
-		name            = "example",
-		description     = "example Section",
-		position        = 2,
-		closedByDefault = true
-	)
-	String ExamplesSection = "examples";
-	// TODO: a section for "Rewards"? and move score/contrib one there
-	
 	
 	
 	//############################   Config Items   ############################
 	
-	// TODO: probs shouldn't be part of Base
 	@ConfigItem
 	(
 		keyName     = "HightlightType",
@@ -69,7 +40,6 @@ extends          Config
 		return HighlightType.OUTLINE;
 	}
 	
-	// TODO: probs shouldn't be part of Base
 	@ConfigItem
 	(
 		keyName     = "OutlineWidth",
@@ -85,7 +55,7 @@ extends          Config
 	
 	@ConfigItem
 	(
-		keyName     = "Display Boiler Icons",
+		keyName     = "DisplayBoilerIcons",
 		name        = "Display Boiler Icons",
 		position    = 2,
 		description = "Display Log/Tinderbox icon over Boilers.",
@@ -96,49 +66,43 @@ extends          Config
 		return true;
 	}
 	
-	
-	
 	@ConfigItem
 	(
-		keyName     = "DisplayScore",
-		name        = "Display Contribution",
-		position    = 0,
-		description = "Display contribution points.",
-		section     = InformationSection
+		keyName     = "DisplayBoilerLogCount",
+		name        = "Boiler Log Count",
+		position    = 3,
+		description = "Display log count over boilers.",
+		section     = BaseSection
 	)
-	default boolean displayScore()
+	default boolean displayBoilerLogCount()
 	{
 		return true;
 	}
 	
-	
-	//Integer example
 	@ConfigItem
 	(
-			keyName     = "IntNumber1",
-			name        = "Integer number box",
-			position    = 1,
-			description = "Integer user number box",
-			section     = ExamplesSection
+		keyName     = "FontSize",
+		name        = "Font Size",
+		position    = 4,
+		description = "Used for boiler log count.",
+		section     = BaseSection
 	)
-	default int IntNumber1()
+	default int fontSize()
 	{
-		return 0;
+		return 18;
 	}
 	
-	
-	//ColourPicking example
 	@ConfigItem
 	(
-			keyName     = "ColourPicking1",
-			name        = "Colour picking",
-			description = "Letting the user pick a colour.",
-			position    = 3,
-			section     = ExamplesSection
+		keyName     = "FontColour",
+		name        = "Font Colour",
+		description = "Used for the boiler's font.",
+		position    = 5,
+		section     = BaseSection
 	)
-	default Color ColourPicking1()
+	default Color fontColour()
 	{
-		return new Color(255, 0, 0, 255);
+		return Color.GRAY;
 	}
 	
 	

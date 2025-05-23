@@ -74,20 +74,6 @@ extends      Plugin
 		boilerOverlay.gameObjectDespawned(event);
 	}
 	
-	@Subscribe
-	public void
-	onWidgetLoaded(WidgetLoaded event)
-	{
-		boilerOverlay.widgetLoaded(event);
-	}
-	
-	@Subscribe
-	public void
-	onWidgetClosed(WidgetClosed event)
-	{
-		boilerOverlay.widgetClosed(event);
-	}
-	
 	@Provides
 	TroubleBrewingConfig
 	provideConfig(ConfigManager configManager)
