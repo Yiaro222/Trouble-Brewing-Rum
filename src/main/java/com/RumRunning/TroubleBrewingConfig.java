@@ -56,7 +56,7 @@ extends          Config
 	@ConfigItem
 	(
 		keyName     = "DisplayBoilerIcons",
-		name        = "Display Boiler Icons",
+		name        = "Boiler Icons",
 		position    = 2,
 		description = "Display Log/Tinderbox icon over Boilers.",
 		section     = BaseSection

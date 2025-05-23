@@ -102,7 +102,7 @@ extends      Overlay
 			
 			if (boilers[i] == null) continue;
 			
-			/* Don't draw if they're out of view */
+			/* Don't draw if they're out of distance */
 			dist = boilers[i].getWorldLocation().distanceTo(player.getWorldLocation());
 			if (dist > DRAW_DIST) continue;
 			
@@ -146,14 +146,14 @@ extends      Overlay
 			pos    = boilers[i].getCanvasTextLocation(graphics, "00/00", 0);
 			if (widget != null && pos != null)
 			{
-				/* to centre better */
+				/* To better centre on boiler */
 				pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
-				/* Do this really have to be called every render call?... */
+				
 				graphics.setFont(new Font(FontManager.getRunescapeFont().getName(),
 				                          Font.PLAIN, config.fontSize()));
-				graphics.setColor(config.fontColour());
 				logCount = Integer.parseInt(widget.getText());
-				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10", Color.GRAY);
+				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10",
+				                               config.fontColour());
 			}
 		}
 		
