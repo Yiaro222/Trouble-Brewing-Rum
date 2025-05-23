@@ -33,7 +33,7 @@ extends      Plugin
 	@Inject
 	private TroubleBrewingConfig        config;
 	@Inject
-	private TroubleBrewingBoilerOverlay boilerOverlay;
+	private TroubleBrewingTemplateOverlay templateOverlay;
 	
 	
 	
@@ -42,7 +42,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
-		overlayManager.add(boilerOverlay);
+		overlayManager.add(templateOverlay);
 	}
 	
 	@Override
@@ -50,7 +50,7 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
-		overlayManager.remove(boilerOverlay);
+		overlayManager.remove(templateOverlay);
 	}
 	
 	@Subscribe
@@ -58,7 +58,7 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's here */
-		boilerOverlay.gameStateChanged(gameStateChanged);
+		templateOverlay.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -66,7 +66,7 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's here */
-		boilerOverlay.gameObjectSpawned(event);
+		templateOverlay.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -74,7 +74,7 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's here */
-		boilerOverlay.gameObjectDespawned(event);
+		templateOverlay.gameObjectDespawned(event);
 	}
 	
 	@Provides

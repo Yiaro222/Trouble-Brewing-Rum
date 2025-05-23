@@ -21,7 +21,7 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 @Slf4j
-public class TroubleBrewingBoilerOverlay
+public class TroubleBrewingTemplateOverlay
 extends      Overlay
 {
 	private final Client               client;
@@ -37,11 +37,11 @@ extends      Overlay
 	
 	@Inject
 	private
-	TroubleBrewingBoilerOverlay(Client               client,
-	                            ModelOutlineRenderer modelOutlineRenderer,
-	                            ItemManager          itemManager,
-	                            TroubleBrewingPlugin plugin,
-	                            TroubleBrewingConfig config)
+	TroubleBrewingTemplateOverlay(Client               client,
+	                              ModelOutlineRenderer modelOutlineRenderer,
+	                              ItemManager          itemManager,
+	                              TroubleBrewingPlugin plugin,
+	                              TroubleBrewingConfig config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
