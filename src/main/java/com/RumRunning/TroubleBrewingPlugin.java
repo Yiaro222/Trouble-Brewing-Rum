@@ -57,7 +57,6 @@ extends      Plugin
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		/* Call your class's here */
 		boilerOverlay.gameStateChanged(gameStateChanged);
 	}
 	
@@ -65,7 +64,6 @@ extends      Plugin
 	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
-		/* Call your class's here */
 		boilerOverlay.gameObjectSpawned(event);
 	}
 	
@@ -73,8 +71,21 @@ extends      Plugin
 	public void
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
-		/* Call your class's here */
 		boilerOverlay.gameObjectDespawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onWidgetLoaded(WidgetLoaded event)
+	{
+		boilerOverlay.widgetLoaded(event);
+	}
+	
+	@Subscribe
+	public void
+	onWidgetClosed(WidgetClosed event)
+	{
+		boilerOverlay.widgetClosed(event);
 	}
 	
 	@Provides
