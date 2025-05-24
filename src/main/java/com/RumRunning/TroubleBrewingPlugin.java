@@ -31,9 +31,9 @@ extends      Plugin
 	private OverlayManager overlayManager;
 	
 	@Inject
-	private TroubleBrewingConfig        config;
+	private TroubleBrewingConfig      config;
 	@Inject
-	private TroubleBrewingTemplateOverlay templateOverlay;
+	private TroubleBrewingSaboOverlay saboOverlay;
 	
 	
 	
@@ -42,7 +42,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
-		overlayManager.add(templateOverlay);
+		overlayManager.add(saboOverlay);
 	}
 	
 	@Override
@@ -50,31 +50,31 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
-		overlayManager.remove(templateOverlay);
+		overlayManager.remove(saboOverlay);
 	}
-	
+
 	@Subscribe
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's here */
-		templateOverlay.gameStateChanged(gameStateChanged);
+		saboOverlay.gameStateChanged(gameStateChanged);
 	}
-	
+
 	@Subscribe
 	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's here */
-		templateOverlay.gameObjectSpawned(event);
+		saboOverlay.gameObjectSpawned(event);
 	}
-	
+
 	@Subscribe
 	public void
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's here */
-		templateOverlay.gameObjectDespawned(event);
+		saboOverlay.gameObjectDespawned(event);
 	}
 	
 	@Provides
