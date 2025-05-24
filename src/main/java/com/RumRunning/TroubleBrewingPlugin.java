@@ -31,9 +31,11 @@ extends      Plugin
 	private OverlayManager overlayManager;
 	
 	@Inject
-	private TroubleBrewingConfig        config;
+	private TroubleBrewingConfig          config;
 	@Inject
 	private TroubleBrewingTemplateOverlay templateOverlay;
+	@Inject
+	private TroubleBrewingUtils           utils;
 	
 	
 	

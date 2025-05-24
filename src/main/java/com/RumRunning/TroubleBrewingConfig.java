@@ -40,6 +40,19 @@ extends          Config
 		return HighlightType.OUTLINE;
 	}
 	
+	@ConfigItem
+	(
+		keyName     = "OutlineWidth",
+		name        = "Outline Width",
+		position    = 1,
+		description = "Number of pixels used when outlining objects.",
+		section     = BaseSection
+	)
+	default int outlineWidth()
+	{
+		return 3;
+	}
+	
 	
 	
 	//############################   Enums          ############################
