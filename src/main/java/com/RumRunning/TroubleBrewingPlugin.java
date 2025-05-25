@@ -36,7 +36,7 @@ extends      Plugin
 	@Inject
 	private TroubleBrewingUtils           utils;
 	@Inject
-	private TroubleBrewingTemplateOverlay templateOverlay;
+	private TroubleBrewingBarkOverlay barkOverlay;
 	
 	
 	
@@ -45,7 +45,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
-		overlayManager.add(templateOverlay);
+		overlayManager.add(barkOverlay);
 	}
 	
 	@Override
@@ -53,7 +53,7 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
-		overlayManager.remove(templateOverlay);
+		overlayManager.remove(barkOverlay);
 	}
 	
 	@Subscribe
@@ -61,7 +61,7 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's gameStateChanged here, if it has one */
-		templateOverlay.gameStateChanged(gameStateChanged);
+		barkOverlay.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -69,7 +69,7 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's gameObjectSpawned here, if it has one */
-		templateOverlay.gameObjectSpawned(event);
+		barkOverlay.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -77,7 +77,7 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's gameObjectDespawned here, if it has one */
-		templateOverlay.gameObjectDespawned(event);
+		barkOverlay.gameObjectDespawned(event);
 	}
 	
 	@Subscribe

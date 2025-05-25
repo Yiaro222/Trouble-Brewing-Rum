@@ -2,18 +2,14 @@
 package com.RumRunning;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
 import net.runelite.api.*;
-import net.runelite.api.Point;
-import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
-import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
@@ -21,7 +17,7 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 @Slf4j
-public class TroubleBrewingTemplateOverlay
+public class TroubleBrewingBarkOverlay
 extends      Overlay
 {
 	private final Client               client;
@@ -37,13 +33,12 @@ extends      Overlay
 	
 	
 	@Inject
-	private
-	TroubleBrewingTemplateOverlay(Client               client,
-	                              ModelOutlineRenderer modelOutlineRenderer,
-	                              ItemManager          itemManager,
-	                              TroubleBrewingPlugin plugin,
-	                              TroubleBrewingConfig config,
-	                              TroubleBrewingUtils  utils)
+	private TroubleBrewingBarkOverlay(Client               client,
+									  ModelOutlineRenderer modelOutlineRenderer,
+									  ItemManager          itemManager,
+									  TroubleBrewingPlugin plugin,
+									  TroubleBrewingConfig config,
+									  TroubleBrewingUtils  utils)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
