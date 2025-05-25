@@ -113,6 +113,14 @@ extends      Overlay
 		new GObj(15851, 3815, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
 		new GObj(15853, 3815, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
 		
+		/* Red team Bitternut Hopper */
+		new GObj(15849, 3817, 3003, WBUCK,  1, "brew_hopper_red_burning_2"),
+		new GObj(15848, 3817, 3003, WBUCK,  1, "brew_hopper_red_burning_1"),
+		new GObj(15854, 3817, 3003, LPATCH, 3, "brew_hopper_red_destroyed"),
+		new GObj(15850, 3817, 3003, LPATCH, 2, "brew_hopper_red_damaged_1"),
+		new GObj(15852, 3817, 3003, LPATCH, 2, "brew_hopper_red_wet_1"),
+		new GObj(15851, 3817, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
+		new GObj(15853, 3817, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
 		
 		/* On fire */
 		new GObj(15875, 3822, 2951, WBUCK,  1, "brew_hopper_blue_burning_2"),
@@ -406,7 +414,6 @@ extends      Overlay
 		new GObj(15887, 3729, 2960, BRIDGE, 1, "brew_bridge_blue_wet_2"),
 		
 		
-		// TODO: i cba to test how many pipes are needed to repair it
 		new GObj(15937, 3606, 2997, WBUCK, 1, "brew_water_pump_fire"),
 		new GObj(15938, 3606, 2997, BPIPE, 1, "brew_water_pump_damaged"),
 		new GObj(15937, 3607, 2954, WBUCK, 1, "brew_water_pump_fire"),
@@ -419,7 +426,12 @@ extends      Overlay
 	 * >> The chat message should give some sort of description of where it happened
 	 * > Maybe add other flammable objects like trees
 	 * > Highlight the required items on the table UI
-	 * > Add icons to show the repair cost
+	 * > Add the repair cost, show multiple icons or add text like X/3 
+	 * > Add a "belongs to" flag in the GObj contructor
+	 * > Only show outlines and icons for your own team
+	 * > Add a highlight / background to the icons, its hard to tell which icon is showing bcus its the same colour as its surroundings - mostly true for the bridge section
+	 * > Get the water pump working, it wont highlight or show an icon
+	 * > Test, test, test
 	 * */
 	
 	
@@ -444,8 +456,8 @@ extends      Overlay
 	render(Graphics2D graphics)
 	{
 		Player player;
-		/* Check the player is in TB, and their plane, and whatnot */
-		/* Check config.hightlightType (or whatever) to see if the option is even enabled */
+		
+		if (!TroubleBrewingUtils.inMinigame) return(null);
 		
 		player = client.getLocalPlayer();
 		
@@ -455,7 +467,38 @@ extends      Overlay
 			    objs.get(i).game_object.getWorldLocation().getPlane() ==
 			    player.getWorldLocation().getPlane())
 			{
-				graphics.draw(objs.get(i).game_object.getClickbox());
+				BufferedImage icon;
+				Point         pos;
+				int           dist;
+				
+				dist = objs.get(i).game_object.getWorldLocation().distanceTo(player.getWorldLocation());
+				if (dist > TroubleBrewingUtils.DRAW_DISTANCE) continue;
+				
+				TroubleBrewingUtils.drawHighlightedGameObject(graphics,
+				                                              modelOutlineRenderer,
+				                                              config,
+				                                              objs.get(i).game_object,
+				                                              config.highlightType(),
+				                                              Color.RED);
+				
+				icon = TroubleBrewingUtils.ICON_BUCKET_OF_WATER;
+				if      (objs.get(i).repair_item_id == LPATCH) icon = TroubleBrewingUtils.ICON_LUMBER_PATCH;
+				else if (objs.get(i).repair_item_id == BPIPE)  icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
+				else if (objs.get(i).repair_item_id == BRIDGE) icon = TroubleBrewingUtils.ICON_BRIDGE_SECTION;
+				
+				if (icon != null)
+				{
+					pos = Perspective.getCanvasImageLocation
+					(
+						client,
+						objs.get(i).game_object.getLocalLocation(),
+						icon, 150
+					);
+					if (pos != null)
+					{
+						graphics.drawImage(icon, pos.getX(), pos.getY(), null);
+					}
+				}
 			}
 		}
 		

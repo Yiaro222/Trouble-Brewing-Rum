@@ -16,9 +16,18 @@ extends          Config
 	
 	@ConfigSection
 	(
+		name            = "General",
+		description     = "General Options.",
+		position        = 0,
+		closedByDefault = false
+	)
+	String GeneralSection = "General";
+	
+	@ConfigSection
+	(
 		name            = "Base",
 		description     = "Options relating to the team's base.",
-		position        = 0,
+		position        = 1,
 		closedByDefault = false
 	)
 	String BaseSection = "Base";
@@ -38,6 +47,45 @@ extends          Config
 	default HighlightType highlightType()
 	{
 		return HighlightType.OUTLINE;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "OutlineWidth",
+		name        = "Outline Width",
+		position    = 1,
+		description = "Number of pixels used when outlining objects.",
+		section     = BaseSection
+	)
+	default int outlineWidth()
+	{
+		return 3;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "FontSize",
+		name        = "Font Size",
+		position    = 0,
+		description = "Used for boiler log count.",
+		section     = GeneralSection
+	)
+	default int fontSize()
+	{
+		return 18;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "FontColour",
+		name        = "Font Colour",
+		description = "Used for the boiler's font.",
+		position    = 1,
+		section     = GeneralSection
+	)
+	default Color fontColour()
+	{
+		return Color.GRAY;
 	}
 	
 	
