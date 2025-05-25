@@ -46,6 +46,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(barkOverlay);
+		overlayManager.add(utils);
 	}
 	
 	@Override
@@ -54,6 +55,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(barkOverlay);
+		overlayManager.remove(utils);
 	}
 	
 	@Subscribe

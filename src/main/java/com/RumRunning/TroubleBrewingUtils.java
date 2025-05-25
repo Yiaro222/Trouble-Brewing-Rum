@@ -31,7 +31,7 @@ extends      Overlay
     public static final WorldPoint RED_TEAM_LOCATION  = new WorldPoint(3815, 3000, 0);
     public static final WorldPoint BLUE_TEAM_LOCATION = new WorldPoint(3815, 2950, 0);
 
-    public static final int DRAW_DISTANCE = 40;
+    public static final int DRAW_DISTANCE = 28;
 
     public static BufferedImage ICON_LOGS;
     public static BufferedImage ICON_TINDERBOX;
