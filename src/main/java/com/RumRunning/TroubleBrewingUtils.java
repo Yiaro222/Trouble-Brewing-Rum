@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
@@ -29,11 +31,16 @@ extends      Overlay
     public static final WorldPoint RED_TEAM_LOCATION  = new WorldPoint(3815, 3000, 0);
     public static final WorldPoint BLUE_TEAM_LOCATION = new WorldPoint(3815, 2950, 0);
 
-    public final BufferedImage ICON_LOGS;
-    public final BufferedImage ICON_TINDERBOX;
-    public final BufferedImage ICON_PIPE_SECTION;
-    public final BufferedImage ICON_BRIDGE_SECTION;
-    public final BufferedImage ICON_LUMBER_PATCH;
+    public static final int DRAW_DISTANCE = 40;
+
+    public static BufferedImage ICON_LOGS;
+    public static BufferedImage ICON_TINDERBOX;
+    public static BufferedImage ICON_BUCKET_OF_WATER;
+    public static BufferedImage ICON_PIPE_SECTION;
+    public static BufferedImage ICON_BRIDGE_SECTION;
+    public static BufferedImage ICON_LUMBER_PATCH;
+
+    public static Font FONT;
 
     @Inject
     private TroubleBrewingUtils(Client               client,
@@ -48,11 +55,14 @@ extends      Overlay
         this.plugin               = plugin;
         this.config               = config;
         
-        ICON_LOGS           = itemManager.getImage(ItemID.LOGS);
-        ICON_TINDERBOX      = itemManager.getImage(ItemID.TINDERBOX);
-        ICON_PIPE_SECTION   = itemManager.getImage(ItemID.BREW_PIPE_SECTION);
-        ICON_BRIDGE_SECTION = itemManager.getImage(ItemID.BREW_BRIDGE_SECTION);
-        ICON_LUMBER_PATCH   = itemManager.getImage(ItemID.BREW_LUMBER_PATCH);
+        ICON_LOGS            = itemManager.getImage(ItemID.LOGS);
+        ICON_TINDERBOX       = itemManager.getImage(ItemID.TINDERBOX);
+        ICON_BUCKET_OF_WATER = itemManager.getImage(ItemID.BUCKET_WATER);
+        ICON_PIPE_SECTION    = itemManager.getImage(ItemID.BREW_PIPE_SECTION);
+        ICON_BRIDGE_SECTION  = itemManager.getImage(ItemID.BREW_BRIDGE_SECTION);
+        ICON_LUMBER_PATCH    = itemManager.getImage(ItemID.BREW_LUMBER_PATCH);
+
+        FONT = new Font(FontManager.getRunescapeFont().getName(), Font.PLAIN, config.fontSize());
     }
 
     @Override
@@ -76,11 +86,13 @@ extends      Overlay
         return null;
     }
 
-    public void
-    DrawHighlightedGameObject(Graphics2D graphics,
-                              GameObject obj,
+    public static void
+    drawHighlightedGameObject(Graphics2D                         graphics,
+                              ModelOutlineRenderer               outlineRenderer,
+                              TroubleBrewingConfig               config,
+                              GameObject                         obj,
                               TroubleBrewingConfig.HighlightType type,
-                              Color colour)
+                              Color                              colour)
     {
         if (type == TroubleBrewingConfig.HighlightType.NONE)
         {
@@ -88,7 +100,7 @@ extends      Overlay
         }
         else if (type == TroubleBrewingConfig.HighlightType.OUTLINE)
         {
-            modelOutlineRenderer.drawOutline(obj, config.outlineWidth(), colour, 1);
+            outlineRenderer.drawOutline(obj, config.outlineWidth(), colour, 1);
         }
         else if (type == TroubleBrewingConfig.HighlightType.HULL_OUTLINE)
         {
@@ -110,5 +122,21 @@ extends      Overlay
             graphics.setColor(colour);
             graphics.fill(obj.getClickbox());
         }
+    }
+
+    /* Non-static version with fewer parameters */
+    public void
+    drawHighlightedGameObject(Graphics2D                         graphics,
+                              GameObject                         obj,
+                              TroubleBrewingConfig.HighlightType type,
+                              Color                              colour)
+    {
+        drawHighlightedGameObject(graphics, modelOutlineRenderer, config, obj, type, colour);
+    }
+
+    public void
+    configChanged(ConfigChanged event)
+    {
+        FONT = new Font(FontManager.getRunescapeFont().getName(), Font.PLAIN, config.fontSize());
     }
 }

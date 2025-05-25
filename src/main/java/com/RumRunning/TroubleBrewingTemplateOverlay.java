@@ -30,6 +30,7 @@ extends      Overlay
 	
 	private final TroubleBrewingPlugin plugin;
 	private final TroubleBrewingConfig config;
+	private final TroubleBrewingUtils  utils;
 	
 	/* Create a list of GameObjects to highlight / whatever here */
 	
@@ -41,21 +42,22 @@ extends      Overlay
 	                              ModelOutlineRenderer modelOutlineRenderer,
 	                              ItemManager          itemManager,
 	                              TroubleBrewingPlugin plugin,
-	                              TroubleBrewingConfig config)
+	                              TroubleBrewingConfig config,
+	                              TroubleBrewingUtils  utils)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.itemManager          = itemManager;
 		this.plugin               = plugin;
 		this.config               = config;
+		this.utils                = utils;
 	}
 	
 	@Override
 	public Dimension
 	render(Graphics2D graphics)
 	{
-		/* Check the player is in TB, and their plane, and whatnot */
-		/* Check config.hightlightType (or whatever) to see if the option is even enabled */
+		/* Check utils.inMinigame and whatnot */
 		
 		return(null);
 	}

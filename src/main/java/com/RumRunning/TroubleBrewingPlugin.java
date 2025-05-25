@@ -11,6 +11,7 @@ import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -33,9 +34,9 @@ extends      Plugin
 	@Inject
 	private TroubleBrewingConfig          config;
 	@Inject
-	private TroubleBrewingTemplateOverlay templateOverlay;
-	@Inject
 	private TroubleBrewingUtils           utils;
+	@Inject
+	private TroubleBrewingTemplateOverlay templateOverlay;
 	
 	
 	
@@ -59,7 +60,7 @@ extends      Plugin
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		/* Call your class's here */
+		/* Call your class's gameStateChanged here, if it has one */
 		templateOverlay.gameStateChanged(gameStateChanged);
 	}
 	
@@ -67,7 +68,7 @@ extends      Plugin
 	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
-		/* Call your class's here */
+		/* Call your class's gameObjectSpawned here, if it has one */
 		templateOverlay.gameObjectSpawned(event);
 	}
 	
@@ -75,8 +76,17 @@ extends      Plugin
 	public void
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
-		/* Call your class's here */
+		/* Call your class's gameObjectDespawned here, if it has one */
 		templateOverlay.gameObjectDespawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onConfigChanged(ConfigChanged event)
+	{
+		utils.configChanged(event);
+		/* Call your class's configChanged here (always call after utils), if
+		 * it has one */
 	}
 	
 	@Provides
