@@ -3,6 +3,7 @@ package com.RumRunning;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.coords.WorldArea;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
@@ -28,10 +29,27 @@ extends      Overlay
     static boolean inMinigame;
     static boolean onRedTeam;
 
+    /* All of these WorldPoints and WorldAreas are for the ground level but
+     * can still be useful for the upstairs hopper room. */
     public static final WorldPoint RED_TEAM_LOCATION  = new WorldPoint(3815, 3000, 0);
     public static final WorldPoint BLUE_TEAM_LOCATION = new WorldPoint(3815, 2950, 0);
 
-    public static final int DRAW_DISTANCE = 40;
+    private static final WorldArea RED_TEAM_BASE_AREA  = new WorldArea(3805, 2997, 19, 9, 0);
+    private static final WorldArea BLUE_TEAM_BASE_AREA = new WorldArea(3806, 2946, 19, 9, 0);
+
+    /* These are roughly the three islands and their bridges */
+    private static final WorldArea MIDDLE_CENTRE = new WorldArea(3800, 2959, 20, 30, 0);
+    private static final WorldArea MIDDLE_EAST   = new WorldArea(3820, 2959, 17, 30, 0);
+    private static final WorldArea MIDDLE_WEST   = new WorldArea(3781, 2959, 19, 30, 0);
+
+    /* It's possible multiple of these are true at once. These are just rectangles, so when in a lobby, the player will
+     * also be contained in NEAR_LOBBY. */
+    private static final WorldArea RED_TEAM_LOBBY             = new WorldArea(3803, 3010, 10, 10, 0);
+    private static final WorldArea BLUE_TEAM_LOBBY            = new WorldArea(3813, 3010, 10, 10, 0);
+    private static final WorldArea BLUE_TEAM_LOBBY_SKIP_TILES = new WorldArea(3822, 3010, 1,  10, 0);
+    private static final WorldArea NEAR_LOBBY                 = new WorldArea(3800, 3008, 26, 17, 0);
+
+    public static final int DRAW_DISTANCE = 28;
 
     public static BufferedImage ICON_LOGS;
     public static BufferedImage ICON_TINDERBOX;

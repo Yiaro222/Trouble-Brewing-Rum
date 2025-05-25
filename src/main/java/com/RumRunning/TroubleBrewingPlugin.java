@@ -45,6 +45,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
+		overlayManager.add(utils);
 		overlayManager.add(templateOverlay);
 	}
 	
@@ -53,6 +54,7 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
+		overlayManager.add(utils);
 		overlayManager.remove(templateOverlay);
 	}
 	
