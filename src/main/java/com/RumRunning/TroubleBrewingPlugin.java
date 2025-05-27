@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -27,9 +28,11 @@ public class TroubleBrewingPlugin
 extends      Plugin
 {
 	@Inject
-	private Client         client;
+	private Client             client;
 	@Inject
-	private OverlayManager overlayManager;
+	private OverlayManager     overlayManager;
+	@Inject
+	private ChatMessageManager chatManager;
 	
 	@Inject
 	private TroubleBrewingConfig      config;
@@ -45,6 +48,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
+		overlayManager.add(utils);
 		overlayManager.add(saboOverlay);
 	}
 	
@@ -53,37 +57,38 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
+		overlayManager.remove(utils);
 		overlayManager.remove(saboOverlay);
 	}
-
+	
 	@Subscribe
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		saboOverlay.gameStateChanged(gameStateChanged);
 	}
-
+	
 	@Subscribe
 	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		saboOverlay.gameObjectSpawned(event);
 	}
-
+	
 	@Subscribe
 	public void
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		saboOverlay.gameObjectDespawned(event);
 	}
-
+	
 	@Subscribe
 	public void
 	onConfigChanged(ConfigChanged event)
 	{
 		utils.configChanged(event);
 	}
-
+	
 	@Provides
 	TroubleBrewingConfig
 	provideConfig(ConfigManager configManager)

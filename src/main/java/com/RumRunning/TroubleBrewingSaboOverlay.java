@@ -7,16 +7,17 @@ import java.util.List;
 import java.util.ArrayList;
 import javax.inject.Inject;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import net.runelite.api.*;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.GameObjectDespawned;
-import net.runelite.api.events.GameObjectSpawned;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.client.eventbus.Subscribe;
+import net.runelite.api.events.*;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
@@ -30,407 +31,92 @@ extends      Overlay
 	private final Client               client;
 	private final ModelOutlineRenderer modelOutlineRenderer;
 	private final ItemManager          itemManager;
+	private final ChatMessageManager   chatManager;
 	
 	private final TroubleBrewingPlugin plugin;
 	private final TroubleBrewingConfig config;
 	
-	private final int WBUCK  = 1929;
-	private final int LPATCH = 8932;
-	private final int BPIPE  = 8930;
-	private final int BRIDGE = 8979;
-	
-	private class
-	GObj
+	private enum Offsets
 	{
-		public GameObject game_object;
+		FIRE_1 (1), /* Fire cycle 2 */
+		FIRE_2 (2), /* Fire cycle 1 */
+		BURNT_1(3), /* Burnt for 2 cycles */
+		BURNT_2(4), /* Burnt for 1 cycle  */
+		WET_1  (5), /* Burnt for 2 cycles, just put out */
+		WET_2  (6), /* Burnt for 1 cycle,  just put out */
+		BURNT_3(7); /* Burnt for 3 cycles / fully burnt, wasn't put out */
 		
-		public int repair_item_id;
-		public int amount_needed; /* As in, if a hopper is fully burnt, then it
-		                           * requires 3 lumber to repair to normal. */
-		
-		/* GameObject ID, world x and y coords. Used for finding the correct
-		 * object to apply to game_object. */
-		public int id, x, y;
-		public String name;
-		
-		public
-		GObj(int id, int x, int y, int repair_item_id, int stages, String name)
-		{
-			this.game_object = null;
-			
-			this.amount_needed  = stages;
-			this.repair_item_id = repair_item_id;
-			
-			this.id   = id;
-			this.x    = x;
-			this.y    = y;
-			this.name = name;
-		}
+		public final int id;
+		Offsets(int id) { this.id = id; }
 	}
 	
-	private List<GObj> objs = new ArrayList<>(List.of
-	(
-		/* On fire */
-		new GObj(15849, 3811, 3000, WBUCK,  1, "brew_hopper_red_burning_2"),
-		new GObj(15848, 3811, 3000, WBUCK,  1, "brew_hopper_red_burning_1"),
+	private enum Type
+	{
+		PIPES_R (15837, 8930, true),
+		PIPES_B (15863, 8930, false),
+		HOPPER_R(15847, 8932, true),
+		HOPPER_B(15873, 8932, false),
+		BRIDGE_R(15855, 8979, true),
+		BRIDGE_B(15881, 8979, true),
 		
-		/* Fire wasn't put out, completely burnt */
-		new GObj(15854, 3811, 3000, LPATCH, 3, "brew_hopper_red_destroyed"),
+		/* Both sides have the same ID, and a different repair system, so this will
+		 * have to be handled differently throughout the code. */
+		PUMP(15936, 8930, false);
 		
-		/* These are essentially the same. If XXX52 is wet and if left for a few
-		 * seconds it will will become XXX50. */
-		new GObj(15850, 3811, 3000, LPATCH, 2, "brew_hopper_red_damaged_1"),
-		new GObj(15852, 3811, 3000, LPATCH, 2, "brew_hopper_red_wet_1"),
+		public final int     working_id;
+		public final int     repair_item_id;
+		public final boolean on_red_side;
 		
-		/* Same here XXX53 -> XXX51, if left */
-		new GObj(15851, 3811, 3000, LPATCH, 1, "brew_hopper_red_damaged_2"),
-		new GObj(15853, 3811, 3000, LPATCH, 1, "brew_hopper_red_wet_2"),
+		public static Type
+		getWorkingType(int id)
+		{
+			for (int i = 0; i < values().length; ++i)
+			{
+				if (id >= values()[i].working_id &&
+			    	id <= values()[i].working_id + Offsets.BURNT_3.id)
+				{
+					return(values()[i]);
+				}
+			}
+			
+			return (null);
+		}
+
+		public static boolean
+		containsWorkingID(int id)
+		{
+			for (int i = 0; i < Type.values().length; ++i)
+			{
+				if (values()[i].working_id == id) return(true);
+			}
+			
+			return(false);
+		}
 		
-		/* Same for red team coloured water hopper */
-		new GObj(15849, 3811, 3003, WBUCK,  1, "brew_hopper_red_burning_2"),
-		new GObj(15848, 3811, 3003, WBUCK,  1, "brew_hopper_red_burning_1"),
-		new GObj(15854, 3811, 3003, LPATCH, 3, "brew_hopper_red_destroyed"),
-		new GObj(15850, 3811, 3003, LPATCH, 2, "brew_hopper_red_damaged_1"),
-		new GObj(15852, 3811, 3003, LPATCH, 2, "brew_hopper_red_wet_1"),
-		new GObj(15851, 3811, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
-		new GObj(15853, 3811, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
-		
-		/* Red team Bark Hopper */
-		new GObj(15849, 3813, 3003, WBUCK,  1, "brew_hopper_red_burning_2"),
-		new GObj(15848, 3813, 3003, WBUCK,  1, "brew_hopper_red_burning_1"),
-		new GObj(15854, 3813, 3003, LPATCH, 3, "brew_hopper_red_destroyed"),
-		new GObj(15850, 3813, 3003, LPATCH, 2, "brew_hopper_red_damaged_1"),
-		new GObj(15852, 3813, 3003, LPATCH, 2, "brew_hopper_red_wet_1"),
-		new GObj(15851, 3813, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
-		new GObj(15853, 3813, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
-		
-		/* Red team Grubs Hopper */
-		new GObj(15849, 3815, 3003, WBUCK,  1, "brew_hopper_red_burning_2"),
-		new GObj(15848, 3815, 3003, WBUCK,  1, "brew_hopper_red_burning_1"),
-		new GObj(15854, 3815, 3003, LPATCH, 3, "brew_hopper_red_destroyed"),
-		new GObj(15850, 3815, 3003, LPATCH, 2, "brew_hopper_red_damaged_1"),
-		new GObj(15852, 3815, 3003, LPATCH, 2, "brew_hopper_red_wet_1"),
-		new GObj(15851, 3815, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
-		new GObj(15853, 3815, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
-		
-		/* Red team Bitternut Hopper */
-		new GObj(15849, 3817, 3003, WBUCK,  1, "brew_hopper_red_burning_2"),
-		new GObj(15848, 3817, 3003, WBUCK,  1, "brew_hopper_red_burning_1"),
-		new GObj(15854, 3817, 3003, LPATCH, 3, "brew_hopper_red_destroyed"),
-		new GObj(15850, 3817, 3003, LPATCH, 2, "brew_hopper_red_damaged_1"),
-		new GObj(15852, 3817, 3003, LPATCH, 2, "brew_hopper_red_wet_1"),
-		new GObj(15851, 3817, 3003, LPATCH, 1, "brew_hopper_red_damaged_2"),
-		new GObj(15853, 3817, 3003, LPATCH, 1, "brew_hopper_red_wet_2"),
-		
-		/* On fire */
-		new GObj(15875, 3822, 2951, WBUCK,  1, "brew_hopper_blue_burning_2"),
-		new GObj(15874, 3822, 2951, WBUCK,  1, "brew_hopper_blue_burning_1"),
-		
-		/* Fire wasn't put out, completely burnt */
-		new GObj(15880, 3822, 2951, LPATCH, 3, "brew_hopper_blue_destroyed"),
-		
-		/* These are essentially the same. If XXX52 is wet and if left for a few
-		 * seconds it will will become XXX50. */
-		new GObj(15876, 3822, 2951, LPATCH, 2, "brew_hopper_blue_damaged_1"),
-		new GObj(15878, 3822, 2951, LPATCH, 2, "brew_hopper_blue_wet_1"),
-		
-		/* Same here XXX53 -> XXX51, if left */
-		new GObj(15877, 3822, 2951, LPATCH, 1, "brew_hopper_blue_damaged_2"),
-		new GObj(15879, 3822, 2951, LPATCH, 1, "brew_hopper_blue_wet_2"),
-		
-		/* Same for blue team coloured water hopper */
-		new GObj(15875, 3822, 2948, WBUCK,  1, "brew_hopper_blue_burning_2"),
-		new GObj(15874, 3822, 2948, WBUCK,  1, "brew_hopper_blue_burning_1"),
-		new GObj(15880, 3822, 2948, LPATCH, 3, "brew_hopper_blue_destroyed"),
-		new GObj(15876, 3822, 2948, LPATCH, 2, "brew_hopper_blue_damaged_1"),
-		new GObj(15878, 3822, 2948, LPATCH, 2, "brew_hopper_blue_wet_1"),
-		new GObj(15877, 3822, 2948, LPATCH, 1, "brew_hopper_blue_damaged_2"),
-		new GObj(15879, 3822, 2948, LPATCH, 1, "brew_hopper_blue_wet_2"),
-		
-		/* blue team Bark Hopper */
-		new GObj(15875, 3820, 2948, WBUCK,  1, "brew_hopper_blue_burning_2"),
-		new GObj(15874, 3820, 2948, WBUCK,  1, "brew_hopper_blue_burning_1"),
-		new GObj(15880, 3820, 2948, LPATCH, 3, "brew_hopper_blue_destroyed"),
-		new GObj(15876, 3820, 2948, LPATCH, 2, "brew_hopper_blue_damaged_1"),
-		new GObj(15878, 3820, 2948, LPATCH, 2, "brew_hopper_blue_wet_1"),
-		new GObj(15877, 3820, 2948, LPATCH, 1, "brew_hopper_blue_damaged_2"),
-		new GObj(15879, 3820, 2948, LPATCH, 1, "brew_hopper_blue_wet_2"),
-		
-		/* blue team Grubs Hopper */
-		new GObj(15875, 3818, 2948, WBUCK,  1, "brew_hopper_blue_burning_2"),
-		new GObj(15874, 3818, 2948, WBUCK,  1, "brew_hopper_blue_burning_1"),
-		new GObj(15880, 3818, 2948, LPATCH, 3, "brew_hopper_blue_destroyed"),
-		new GObj(15876, 3818, 2948, LPATCH, 2, "brew_hopper_blue_damaged_1"),
-		new GObj(15878, 3818, 2948, LPATCH, 2, "brew_hopper_blue_wet_1"),
-		new GObj(15877, 3818, 2948, LPATCH, 1, "brew_hopper_blue_damaged_2"),
-		new GObj(15879, 3818, 2948, LPATCH, 1, "brew_hopper_blue_wet_2"),
-		
-		/* blue team Bitternut Hopper */
-		new GObj(15875, 3816, 2948, WBUCK,  1, "brew_hopper_blue_burning_2"),
-		new GObj(15874, 3816, 2948, WBUCK,  1, "brew_hopper_blue_burning_1"),
-		new GObj(15880, 3816, 2948, LPATCH, 3, "brew_hopper_blue_destroyed"),
-		new GObj(15876, 3816, 2948, LPATCH, 2, "brew_hopper_blue_damaged_1"),
-		new GObj(15878, 3816, 2948, LPATCH, 2, "brew_hopper_blue_wet_1"),
-		new GObj(15877, 3816, 2948, LPATCH, 1, "brew_hopper_blue_damaged_2"),
-		new GObj(15879, 3816, 2948, LPATCH, 1, "brew_hopper_blue_wet_2"),
-		
-		
-		/* Pipes work exactly the same -
-		 * n+0 = 15837 = normal/fixed
-		 * n+1 = 15838 = burning C2
-		 * n+2 = 15839 = burning C1
-		 * n+3 = 15840 = burnt 2 mats to fix
-		 * n+4 = 15841 = burnt 1 mat  to fix
-		 * n+5 = 15842 = burnt/wet C2 2 mats to fix, changes to n+3 if left
-		 * n+6 = 15843 = burnt/wet C1 1 mat  to fix, changes to n+4 if left
-		 * n+7 = 15844 = Totally burnt / C3, 3 mats to fix
-		*/
-		new GObj(15839, 3819, 3003, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3819, 3003, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3819, 3003, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3819, 3003, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3819, 3003, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3819, 3003, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3819, 3003, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3818, 3003, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3818, 3003, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3818, 3003, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3818, 3003, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3818, 3003, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3818, 3003, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3818, 3003, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3815, 3004, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3815, 3004, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3815, 3004, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3815, 3004, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3815, 3004, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3815, 3004, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3815, 3004, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3814, 3004, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3814, 3004, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3814, 3004, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3814, 3004, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3814, 3004, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3814, 3004, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3814, 3004, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3813, 3004, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3813, 3004, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3813, 3004, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3813, 3004, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3813, 3004, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3813, 3004, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3813, 3004, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3812, 3002, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3812, 3002, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3812, 3002, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3812, 3002, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3812, 3002, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3812, 3002, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3812, 3002, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3812, 3001, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3812, 3001, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3812, 3001, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3812, 3001, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3812, 3001, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3812, 3001, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3812, 3001, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		new GObj(15839, 3813, 2999, WBUCK, 1, "brew_pipes_red_burning_2"),
-		new GObj(15838, 3813, 2999, WBUCK, 1, "brew_pipes_red_burning_1"),
-		new GObj(15844, 3813, 2999, BPIPE, 3, "brew_pipes_red_destroyed"),
-		new GObj(15840, 3813, 2999, BPIPE, 2, "brew_pipes_red_damaged_1"),
-		new GObj(15842, 3813, 2999, BPIPE, 2, "brew_pipes_red_wet_1"),
-		new GObj(15841, 3813, 2999, BPIPE, 1, "brew_pipes_red_damaged_2"),
-		new GObj(15843, 3813, 2999, BPIPE, 1, "brew_pipes_red_wet_2"),
-		
-		
-		new GObj(15865, 3814, 2948, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3814, 2948, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3814, 2948, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3814, 2948, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3814, 2948, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3814, 2948, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3814, 2948, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3815, 2948, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3815, 2948, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3815, 2948, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3815, 2948, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3815, 2948, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3815, 2948, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3815, 2948, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3818, 2947, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3818, 2947, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3818, 2947, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3818, 2947, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3818, 2947, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3818, 2947, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3818, 2947, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3819, 2947, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3819, 2947, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3819, 2947, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3819, 2947, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3819, 2947, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3819, 2947, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3819, 2947, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3820, 2947, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3820, 2947, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3820, 2947, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3820, 2947, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3820, 2947, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3820, 2947, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3820, 2947, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3821, 2949, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3821, 2949, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3821, 2949, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3821, 2949, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3821, 2949, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3821, 2949, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3821, 2949, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3821, 2950, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3821, 2950, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3821, 2950, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3821, 2950, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3821, 2950, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3821, 2950, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3821, 2950, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		new GObj(15865, 3820, 2952, WBUCK, 1, "brew_pipes_blue_burning_2"),
-		new GObj(15864, 3820, 2952, WBUCK, 1, "brew_pipes_blue_burning_1"),
-		new GObj(15870, 3820, 2952, BPIPE, 3, "brew_pipes_blue_destroyed"),
-		new GObj(15866, 3820, 2952, BPIPE, 2, "brew_pipes_blue_damaged_1"),
-		new GObj(15868, 3820, 2952, BPIPE, 2, "brew_pipes_blue_wet_1"),
-		new GObj(15867, 3820, 2952, BPIPE, 1, "brew_pipes_blue_damaged_2"),
-		new GObj(15869, 3820, 2952, BPIPE, 1, "brew_pipes_blue_wet_2"),
-		
-		
-		
-		new GObj(15857, 3806, 2984, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3806, 2984, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3806, 2984, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3806, 2984, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3806, 2984, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3806, 2984, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3806, 2984, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		new GObj(15857, 3806, 2983, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3806, 2983, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3806, 2983, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3806, 2983, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3806, 2983, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3806, 2983, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3806, 2983, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		new GObj(15857, 3787, 2982, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3787, 2982, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3787, 2982, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3787, 2982, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3787, 2982, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3787, 2982, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3787, 2982, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		new GObj(15857, 3786, 2982, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3786, 2982, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3786, 2982, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3786, 2982, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3786, 2982, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3786, 2982, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3786, 2982, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		new GObj(15857, 3826, 2984, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3826, 2984, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3826, 2984, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3826, 2984, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3826, 2984, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3826, 2984, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3826, 2984, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		new GObj(15857, 3827, 2984, WBUCK,  1, "brew_bridge_red_burning_2"),
-		new GObj(15856, 3827, 2984, WBUCK,  1, "brew_bridge_red_burning_1"),
-		new GObj(15862, 3827, 2984, BRIDGE, 3, "brew_bridge_red_destroyed"),
-		new GObj(15858, 3827, 2984, BRIDGE, 2, "brew_bridge_red_damaged_1"),
-		new GObj(15859, 3827, 2984, BRIDGE, 2, "brew_bridge_red_wet_1"),
-		new GObj(15860, 3827, 2984, BRIDGE, 1, "brew_bridge_red_damaged_2"),
-		new GObj(15861, 3827, 2984, BRIDGE, 1, "brew_bridge_red_wet_2"),
-		
-		
-		new GObj(15883, 3809, 2964, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3809, 2964, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3809, 2964, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3809, 2964, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3809, 2964, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3809, 2964, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3809, 2964, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		new GObj(15883, 3809, 2965, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3809, 2965, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3809, 2965, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3809, 2965, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3809, 2965, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3809, 2965, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3809, 2965, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		new GObj(15883, 3793, 2965, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3793, 2965, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3793, 2965, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3793, 2965, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3793, 2965, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3793, 2965, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3793, 2965, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		new GObj(15883, 3792, 2965, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3792, 2965, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3792, 2965, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3792, 2965, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3792, 2965, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3792, 2965, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3792, 2965, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		new GObj(15883, 3828, 2960, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3828, 2960, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3828, 2960, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3828, 2960, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3828, 2960, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3828, 2960, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3828, 2960, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		new GObj(15883, 3729, 2960, WBUCK,  1, "brew_bridge_blue_burning_2"),
-		new GObj(15882, 3729, 2960, WBUCK,  1, "brew_bridge_blue_burning_1"),
-		new GObj(15888, 3729, 2960, BRIDGE, 3, "brew_bridge_blue_destroyed"),
-		new GObj(15884, 3729, 2960, BRIDGE, 2, "brew_bridge_blue_damaged_1"),
-		new GObj(15885, 3729, 2960, BRIDGE, 2, "brew_bridge_blue_wet_1"),
-		new GObj(15886, 3729, 2960, BRIDGE, 1, "brew_bridge_blue_damaged_2"),
-		new GObj(15887, 3729, 2960, BRIDGE, 1, "brew_bridge_blue_wet_2"),
-		
-		
-		new GObj(15937, 3606, 2997, WBUCK, 1, "brew_water_pump_fire"),
-		new GObj(15938, 3606, 2997, BPIPE, 1, "brew_water_pump_damaged"),
-		new GObj(15937, 3607, 2954, WBUCK, 1, "brew_water_pump_fire"),
-		new GObj(15938, 3607, 2954, BPIPE, 1, "brew_water_pump_damaged")
-	));
+		Type(int workingID, int repairItemID, boolean redSide)
+		{
+			working_id     = workingID;
+			repair_item_id = repairItemID;
+			on_red_side    = redSide;
+			
+		}
+	};
+	
+	private List<GameObject> brokenObjs          = new ArrayList<>();
+	private List<WorldPoint> trackForSaboMessage = new ArrayList<>();
 	
 	/*
 	 * TODO:
-	 * > Maybe have a notification + chat message when its been saboed
-	 * >> The chat message should give some sort of description of where it happened
-	 * > Maybe add other flammable objects like trees
+	 * > Have a notification when saboed
+	 * > Add other flammable objects like trees
 	 * > Highlight the required items on the table UI
-	 * > Add the repair cost, show multiple icons or add text like X/3 
-	 * > Add a "belongs to" flag in the GObj contructor
-	 * > Only show outlines and icons for your own team
-	 * > Add a highlight / background to the icons, its hard to tell which icon is showing bcus its the same colour as its surroundings - mostly true for the bridge section
-	 * > Get the water pump working, it wont highlight or show an icon
+	 * > Add a highlight / background to the icons, its hard to tell which icon
+	 *   is showing bcus its the same colour as its surroundings - mostly true
+	 *   for the bridge section
+	 * > Add a timer (or something) so the chatbox doesnt get nuked with messages
+	 *   if the player joins midgame to a room half saboed
+	 * > Fix the weird perspective issue with icons
+	 * > Fix the arrangement of icons in DrawIconThree(...) (pipes overlap)
 	 * > Test, test, test
 	 * */
 	
@@ -441,79 +127,179 @@ extends      Overlay
 	TroubleBrewingSaboOverlay(Client               client,
 	                          ModelOutlineRenderer modelOutlineRenderer,
 	                          ItemManager          itemManager,
+	                          ChatMessageManager   chatManager,
 	                          TroubleBrewingPlugin plugin,
 	                          TroubleBrewingConfig config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.itemManager          = itemManager;
+		this.chatManager          = chatManager;
 		this.plugin               = plugin;
 		this.config               = config;
+		
+		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
 	
 	@Override
 	public Dimension
 	render(Graphics2D graphics)
 	{
-		Player player;
+		final Player player = client.getLocalPlayer();
 		
 		if (!TroubleBrewingUtils.inMinigame) return(null);
 		
-		player = client.getLocalPlayer();
-		
-		for (int i = 0; i < objs.size(); ++i)
+		for (int i = 0; i < brokenObjs.size(); ++i)
 		{
-			if (objs.get(i).game_object != null &&
-			    objs.get(i).game_object.getWorldLocation().getPlane() ==
+			final int id = brokenObjs.get(i).getId();
+			
+			BufferedImage icon         = null;
+			int           iconAmount   = 0;
+			int           workingID    = 0;
+			
+			if (brokenObjs.get(i).getWorldLocation().distanceTo(player.getWorldLocation()) >
+			    TroubleBrewingUtils.DRAW_DISTANCE ||
+			    brokenObjs.get(i).getWorldLocation().getPlane() !=
 			    player.getWorldLocation().getPlane())
 			{
-				BufferedImage icon;
-				Point         pos;
-				int           dist;
-				
-				dist = objs.get(i).game_object.getWorldLocation().distanceTo(player.getWorldLocation());
-				if (dist > TroubleBrewingUtils.DRAW_DISTANCE) continue;
-				
-				TroubleBrewingUtils.drawHighlightedGameObject(graphics,
-				                                              modelOutlineRenderer,
-				                                              config,
-				                                              objs.get(i).game_object,
-				                                              config.highlightType(),
-				                                              Color.RED);
-				
-				icon = TroubleBrewingUtils.ICON_BUCKET_OF_WATER;
-				if      (objs.get(i).repair_item_id == LPATCH) icon = TroubleBrewingUtils.ICON_LUMBER_PATCH;
-				else if (objs.get(i).repair_item_id == BPIPE)  icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
-				else if (objs.get(i).repair_item_id == BRIDGE) icon = TroubleBrewingUtils.ICON_BRIDGE_SECTION;
-				
-				if (icon != null)
+				continue;
+			}
+		
+			/* THE DEFAULT "Outline" OPTION DOES NOT WOKR FOR SOME OBJECTS (bridge)*/
+			TroubleBrewingUtils.drawHighlightedGameObject(graphics,
+			                                              modelOutlineRenderer,
+			                                              config,
+			                                              brokenObjs.get(i),
+			                                              config.highlightType(),
+			                                              Color.RED);
+			
+			for (Type x : Type.values())
+			{
+				workingID = x.working_id;
+				if (id >= Type.PUMP.working_id && id <= Type.PUMP.working_id + 2)
 				{
-					pos = Perspective.getCanvasImageLocation
-					(
-						client,
-						objs.get(i).game_object.getLocalLocation(),
-						icon, 150
-					);
-					if (pos != null)
-					{
-						graphics.drawImage(icon, pos.getX(), pos.getY(), null);
-					}
+					workingID  = Type.PUMP.working_id;
+					iconAmount = 1;
+					break;
+				}
+				
+				if ((id == workingID + Offsets.FIRE_1.id  ||
+				     id == workingID + Offsets.FIRE_2.id) ||
+				    (id == workingID + Offsets.BURNT_2.id ||
+				     id == workingID + Offsets.WET_2.id))
+				{
+					iconAmount = 1;
+					break;
+				}
+				else if (id == workingID + Offsets.BURNT_1.id ||
+				         id == workingID + Offsets.WET_1.id)
+				{
+					iconAmount = 2;
+					break;
+				}
+				else if (id == workingID + Offsets.BURNT_3.id)
+				{
+					iconAmount = 3;
+					break;
 				}
 			}
+			
+			if (iconAmount == 0) continue;
+			
+			if (id == workingID + Offsets.FIRE_1.id  ||
+			    (id == workingID + Offsets.FIRE_2.id &&
+			     workingID != Type.PUMP.working_id)  ||
+			    (workingID == Type.PUMP.working_id   &&
+			     id == Type.PUMP.working_id + 1))
+			{
+				icon = TroubleBrewingUtils.ICON_BUCKET_OF_WATER;
+			}
+			else if (workingID == Type.PIPES_R.working_id ||
+			         workingID == Type.PIPES_B.working_id)
+			{
+				icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
+			}
+			else if (workingID == Type.HOPPER_R.working_id ||
+			         workingID == Type.HOPPER_B.working_id)
+			{
+				icon = TroubleBrewingUtils.ICON_LUMBER_PATCH;
+			}
+			else if (workingID == Type.BRIDGE_R.working_id ||
+			         workingID == Type.BRIDGE_B.working_id)
+			{
+				icon = TroubleBrewingUtils.ICON_BRIDGE_SECTION;
+			}
+			else if (workingID == Type.PUMP.working_id &&
+			         id == Type.PUMP.working_id + 2)
+			{
+				icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
+			}
+			
+			DrawIcon(graphics, icon, brokenObjs.get(i), iconAmount);
 		}
 		
 		return(null);
 	}
+	
+	private void
+	DrawIconThree(Graphics2D graphics, BufferedImage icon, GameObject gameObject)
+	{
+		Point p = gameObject.getCanvasLocation(150);
+		if (icon == null || p == null) return;
+		
+		p = new Point(p.getX() - 11, p.getY());
+		DrawIcon(graphics, icon, p);
+		p = new Point(p.getX() + 11, p.getY() - 6);
+		DrawIcon(graphics, icon, p);
+		p = new Point(p.getX() + 15, p.getY() + 6);
+		DrawIcon(graphics, icon, p);
+	}
+	
+	private void
+	DrawIconTwo(Graphics2D graphics, BufferedImage icon, GameObject gameObject)
+	{
+		Point p = gameObject.getCanvasLocation(150);
+		if (icon == null || p == null) return;
+		
+		p = new Point(p.getX() - 4, p.getY());
+		DrawIcon(graphics, icon, p);
+		p = new Point(p.getX() + 8, p.getY() - 1);
+		DrawIcon(graphics, icon, p);
+	}
+	
+	private void
+	DrawIcon(Graphics2D graphics, BufferedImage icon, Point point)
+	{
+		if (icon == null || point == null) return;
+		graphics.drawImage(icon, point.getX(), point.getY(), null);
+	}
+	
+	private void
+	DrawIcon(Graphics2D graphics, BufferedImage icon, GameObject gameObject,
+	         int amount)
+	{
+		if (amount == 1)
+		{
+			DrawIcon(graphics, icon, gameObject.getCanvasLocation(150));
+		}
+		else if (amount == 2)
+		{
+			DrawIconTwo(graphics, icon, gameObject);
+		}
+		else if (amount == 3)
+		{
+			DrawIconThree(graphics, icon, gameObject);
+		}
+		else {  }
+	}
+	
 	
 	public void
 	gameStateChanged(GameStateChanged gameStateChanged)
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-			for (int i = 0; i < objs.size(); ++i)
-			{
-				objs.get(i).game_object = null;
-			}
+			brokenObjs.clear();
 		}
 	}
 	
@@ -523,14 +309,67 @@ extends      Overlay
 		final GameObject gameObject = event.getGameObject();
 		final WorldPoint wp         = gameObject.getWorldLocation();
 		
-		for (int i = 0; i < objs.size(); ++i)
+		if (!TroubleBrewingUtils.getTeamsHalf().contains(wp)) return;
+		if (Type.containsWorkingID(gameObject.getId())) return;
+		
+		if (trackForSaboMessage.stream().anyMatch(x ->
+		    x.getX() == wp.getX() && x.getY() == wp.getY()))
 		{
-			if (objs.get(i).id == gameObject.getId() &&
-			    objs.get(i).x  == wp.getX()          &&
-			    objs.get(i).y  == wp.getY())
+			final Type workingType = Type.getWorkingType(gameObject.getId());
+			
+			String message = "";
+			String formattedMsg;
+			
+			if (workingType == Type.PIPES_R || workingType == Type.PIPES_B)
 			{
-				objs.get(i).game_object = gameObject;
-				return;
+				message = "Your team's Pipes have been sabotaged!";
+			}
+			else if (workingType == Type.HOPPER_R || workingType == Type.HOPPER_B)
+			{
+				message = "One of your team's Hoppers has been sabotaged!";
+			}
+			else if (workingType == Type.BRIDGE_R || workingType == Type.BRIDGE_B)
+			{
+				if (TroubleBrewingUtils.MIDDLE_WEST.contains(wp))
+				{
+					message = "Your team's Western Bridge has been sabotaged!";
+				}
+				else if (TroubleBrewingUtils.MIDDLE_CENTRE.contains(wp))
+				{
+					message = "Your team's Middle Bridge has been sabotaged!";
+				}
+				else if (TroubleBrewingUtils.MIDDLE_EAST.contains(wp))
+				{
+					message = "Your team's Eastern Bridge has been sabotaged!";
+				}
+			}
+			else if (workingType == Type.PUMP)
+			{
+				message = "Your team's Water Pump has been sabotaged!";
+			}
+
+			if (message.length() > 0)
+			{
+				formattedMsg = new ChatMessageBuilder().append(ChatColorType.HIGHLIGHT)
+				                                       .append(message)
+				                                       .build();
+				chatManager.queue(QueuedMessage.builder()
+				           .type(ChatMessageType.CONSOLE)
+				           .runeLiteFormattedMessage(formattedMsg)
+				           .build());
+			}
+			
+			trackForSaboMessage.remove(wp);
+		}
+		
+		if (brokenObjs.contains(gameObject)) return;
+		
+		for (int i = 0; i < Type.values().length; ++i)
+		{
+			if (gameObject.getId() >= Type.values()[i].working_id + Offsets.FIRE_1.id  &&
+			    gameObject.getId() <= Type.values()[i].working_id + Offsets.BURNT_3.id)
+			{
+				brokenObjs.add(gameObject);
 			}
 		}
 	}
@@ -539,16 +378,14 @@ extends      Overlay
 	gameObjectDespawned(GameObjectDespawned event)
 	{
 		final GameObject gameObject = event.getGameObject();
+		brokenObjs.remove(gameObject);
 		
-		for (int i = 0; i < objs.size(); ++i)
+		if (TroubleBrewingUtils.inMinigame(client) &&
+		    Type.containsWorkingID(gameObject.getId()))
 		{
-			if (objs.get(i).game_object == gameObject)
-			{
-				objs.get(i).game_object = null;
-			}
+			trackForSaboMessage.add(gameObject.getWorldLocation());
 		}
 	}
-	
 }
 
 
