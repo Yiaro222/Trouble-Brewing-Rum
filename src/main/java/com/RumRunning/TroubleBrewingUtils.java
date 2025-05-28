@@ -91,7 +91,8 @@ extends      Overlay
     render(Graphics2D graphics)
     {
         inMinigame(client);
-        onRedTeam(client);
+        if (inMinigame)
+            onRedTeam(client);
 
         return null;
     }
@@ -102,11 +103,11 @@ extends      Overlay
         final Player player = client.getLocalPlayer();
 
         // Check if player is inside the Minigame chunk
-        if (!(player.getWorldLocation().getRegionID() == 15150))
+        if (player.getWorldLocation().getRegionID() == 15150)
         {
-             inMinigame = false;
+             inMinigame = true;
         }
-        else inMinigame = true;
+        else inMinigame = false;
 
         return inMinigame;
     }
@@ -114,9 +115,14 @@ extends      Overlay
     public static boolean
     onRedTeam(Client client)
     {
-        onRedTeam = client.getItemContainer(InventoryID.EQUIPMENT)
-                          .getItem(EquipmentInventorySlot.HEAD
-                          .getSlotIdx()).getId() == ItemID.BREW_RED_PIRATE_HAT;
+        Item headSlot;
+        
+        headSlot = client.getItemContainer(InventoryID.EQUIPMENT)
+                         .getItem(EquipmentInventorySlot.HEAD.getSlotIdx());
+        if (headSlot == null) return onRedTeam;
+        
+        onRedTeam = headSlot.getId() == ItemID.BREW_RED_PIRATE_HAT;
+        
         return onRedTeam;
     }
 
