@@ -36,7 +36,7 @@ extends      Plugin
 	@Inject
 	private TroubleBrewingUtils           utils;
 	@Inject
-	private TroubleBrewingBarkOverlay barkOverlay;
+	private TroubleBrewingGrubOverlay grubOverlay;
 	
 	
 	
@@ -45,7 +45,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
-		overlayManager.add(barkOverlay);
+		overlayManager.add(grubOverlay);
 		overlayManager.add(utils);
 	}
 	
@@ -54,7 +54,7 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
-		overlayManager.remove(barkOverlay);
+		overlayManager.remove(grubOverlay);
 		overlayManager.remove(utils);
 	}
 	
@@ -63,7 +63,7 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's gameStateChanged here, if it has one */
-		barkOverlay.gameStateChanged(gameStateChanged);
+		grubOverlay.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -71,7 +71,7 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's gameObjectSpawned here, if it has one */
-		barkOverlay.gameObjectSpawned(event);
+		grubOverlay.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -79,7 +79,23 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's gameObjectDespawned here, if it has one */
-		barkOverlay.gameObjectDespawned(event);
+		grubOverlay.gameObjectDespawned(event);
+	}
+
+	@Subscribe
+	public void
+	onNpcSpawned(NpcSpawned event)
+	{
+		/* Call your class's gameObjectDespawned here, if it has one */
+		grubOverlay.onNpcSpawned(event);
+	}
+
+	@Subscribe
+	public void
+	onNpcDespawned(NpcDespawned event)
+	{
+		/* Call your class's gameObjectDespawned here, if it has one */
+		grubOverlay.onNpcDespawned(event);
 	}
 	
 	@Subscribe
@@ -89,6 +105,13 @@ extends      Plugin
 		utils.configChanged(event);
 		/* Call your class's configChanged here (always call after utils), if
 		 * it has one */
+	}
+
+	@Subscribe
+	public void
+	onGameTick(GameTick tick)
+	{
+		grubOverlay.gameTick(tick);
 	}
 	
 	@Provides

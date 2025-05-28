@@ -59,7 +59,7 @@ extends          Config
 	)
 	default int outlineWidth()
 	{
-		return 3;
+		return 1;
 	}
 	
 	@ConfigItem
