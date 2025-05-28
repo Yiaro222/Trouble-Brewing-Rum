@@ -106,13 +106,6 @@ extends      Plugin
 		/* Call your class's configChanged here (always call after utils), if
 		 * it has one */
 	}
-
-	@Subscribe
-	public void
-	onGameTick(GameTick tick)
-	{
-		grubOverlay.gameTick(tick);
-	}
 	
 	@Provides
 	TroubleBrewingConfig
