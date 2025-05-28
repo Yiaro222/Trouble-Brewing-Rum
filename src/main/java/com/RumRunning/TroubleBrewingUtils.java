@@ -90,8 +90,8 @@ extends      Overlay
     public Dimension
     render(Graphics2D graphics)
     {
-        inMinigame(client);
-        onRedTeam(client);
+//        inMinigame(client);
+//        onRedTeam(client);
 
         return null;
     }

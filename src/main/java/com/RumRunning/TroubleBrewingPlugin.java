@@ -12,6 +12,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -30,13 +31,15 @@ extends      Plugin
 	private Client         client;
 	@Inject
 	private OverlayManager overlayManager;
+	@Inject
+	private ItemManager itemManager;
 	
 	@Inject
-	private TroubleBrewingConfig          config;
+	private TroubleBrewingConfig config;
 	@Inject
-	private TroubleBrewingUtils           utils;
+	private TroubleBrewingUtils  utils;
 	@Inject
-	private TroubleBrewingMESOverlay mesOverlay;
+	private TroubleBrewingMES    mes;
 	
 	
 	
@@ -46,7 +49,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
-		overlayManager.add(mesOverlay);
+		mes = new TroubleBrewingMES(client, itemManager, this, config, utils);
 	}
 	
 	@Override
@@ -55,7 +58,6 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.add(utils);
-		overlayManager.remove(mesOverlay);
 	}
 	
 	@Subscribe
@@ -63,7 +65,20 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's gameStateChanged here, if it has one */
-		mesOverlay.gameStateChanged(gameStateChanged);
+	}
+	
+	@Subscribe
+	public void
+	onPostMenuSort(PostMenuSort postMenuSort)
+	{
+		mes.postMenuSort(postMenuSort);
+	}
+	
+	@Subscribe
+	public void
+	onClientTick(ClientTick clientTick)
+	{
+		// mes.clientTick(clientTick);
 	}
 	
 	@Subscribe
@@ -71,7 +86,6 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's gameObjectSpawned here, if it has one */
-		mesOverlay.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -79,7 +93,6 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's gameObjectDespawned here, if it has one */
-		mesOverlay.gameObjectDespawned(event);
 	}
 	
 	@Subscribe
