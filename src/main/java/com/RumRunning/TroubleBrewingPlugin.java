@@ -35,11 +35,11 @@ extends      Plugin
 	private ChatMessageManager chatManager;
 	
 	@Inject
-	private TroubleBrewingConfig      config;
+	private Config config;
 	@Inject
-	private TroubleBrewingUtils       utils;
+	private Utils  utils;
 	@Inject
-	private TroubleBrewingSaboOverlay saboOverlay;
+	private Sabo   sabo;
 	
 	
 	
@@ -49,7 +49,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
-		overlayManager.add(saboOverlay);
+		overlayManager.add(sabo);
 	}
 	
 	@Override
@@ -57,29 +57,29 @@ extends      Plugin
 	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
+		overlayManager.remove(sabo);
 		overlayManager.remove(utils);
-		overlayManager.remove(saboOverlay);
 	}
 	
 	@Subscribe
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		saboOverlay.gameStateChanged(gameStateChanged);
+		sabo.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
 	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
-		saboOverlay.gameObjectSpawned(event);
+		sabo.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
 	public void
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
-		saboOverlay.gameObjectDespawned(event);
+		sabo.gameObjectDespawned(event);
 	}
 	
 	@Subscribe
@@ -90,11 +90,12 @@ extends      Plugin
 	}
 	
 	@Provides
-	TroubleBrewingConfig
+	Config
 	provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(TroubleBrewingConfig.class);
+		return configManager.getConfig(Config.class);
 	}
+	
 }
 
 

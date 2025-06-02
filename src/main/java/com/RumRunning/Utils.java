@@ -16,15 +16,14 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 @Slf4j
-public class TroubleBrewingUtils
+public class Utils
 extends      Overlay
 {
     private final Client               client;
     private final ModelOutlineRenderer modelOutlineRenderer;
     private final ItemManager          itemManager;
 
-    private final TroubleBrewingPlugin plugin;
-    private final TroubleBrewingConfig config;
+    private final Config config;
 
     public static boolean inMinigame;
     public static boolean onRedTeam;
@@ -64,16 +63,15 @@ extends      Overlay
     public static Font FONT;
 
     @Inject
-    private TroubleBrewingUtils(Client               client,
-                                ModelOutlineRenderer modelOutlineRenderer,
-                                ItemManager          itemManager,
-                                TroubleBrewingPlugin plugin,
-                                TroubleBrewingConfig config)
+    private
+    Utils(Client               client,
+          ModelOutlineRenderer modelOutlineRenderer,
+          ItemManager          itemManager,
+          Config               config)
     {
         this.client               = client;
         this.modelOutlineRenderer = modelOutlineRenderer;
         this.itemManager          = itemManager;
-        this.plugin               = plugin;
         this.config               = config;
         
         ICON_LOGS            = itemManager.getImage(ItemID.LOGS);
@@ -130,37 +128,37 @@ extends      Overlay
     }
 
     public static void
-    drawHighlightedGameObject(Graphics2D                         graphics,
-                              ModelOutlineRenderer               outlineRenderer,
-                              TroubleBrewingConfig               config,
-                              GameObject                         obj,
-                              TroubleBrewingConfig.HighlightType type,
-                              Color                              colour)
+    drawHighlightedGameObject(Graphics2D           graphics,
+                              ModelOutlineRenderer outlineRenderer,
+                              Config               config,
+                              GameObject           obj,
+                              Config.HighlightType type,
+                              Color                colour)
     {
-        if (type == TroubleBrewingConfig.HighlightType.NONE)
+        if (type == Config.HighlightType.NONE)
         {
             return;
         }
-        else if (type == TroubleBrewingConfig.HighlightType.OUTLINE)
+        else if (type == Config.HighlightType.OUTLINE)
         {
             outlineRenderer.drawOutline(obj, config.outlineWidth(), colour, 1);
         }
-        else if (type == TroubleBrewingConfig.HighlightType.HULL_OUTLINE)
+        else if (type == Config.HighlightType.HULL_OUTLINE)
         {
             graphics.setColor(colour);
             graphics.draw(obj.getConvexHull());
         }
-        else if (type == TroubleBrewingConfig.HighlightType.HULL_FILLED)
+        else if (type == Config.HighlightType.HULL_FILLED)
         {
             graphics.setColor(colour);
             graphics.fill(obj.getConvexHull());
         }
-        else if (type == TroubleBrewingConfig.HighlightType.CLICKBOX_OUTLINE)
+        else if (type == Config.HighlightType.CLICKBOX_OUTLINE)
         {
             graphics.setColor(colour);
             graphics.draw(obj.getClickbox());
         }
-        else if (type == TroubleBrewingConfig.HighlightType.CLICKBOX_FILLED)
+        else if (type == Config.HighlightType.CLICKBOX_FILLED)
         {
             graphics.setColor(colour);
             graphics.fill(obj.getClickbox());
@@ -169,10 +167,10 @@ extends      Overlay
 
     /* Non-static version with fewer parameters */
     public void
-    drawHighlightedGameObject(Graphics2D                         graphics,
-                              GameObject                         obj,
-                              TroubleBrewingConfig.HighlightType type,
-                              Color                              colour)
+    drawHighlightedGameObject(Graphics2D           graphics,
+                              GameObject           obj,
+                              Config.HighlightType type,
+                              Color                colour)
     {
         drawHighlightedGameObject(graphics, modelOutlineRenderer, config, obj, type, colour);
     }

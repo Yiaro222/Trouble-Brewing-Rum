@@ -25,7 +25,7 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 @Slf4j
-public class TroubleBrewingSaboOverlay
+public class Sabo
 extends      Overlay
 {
 	private final Client               client;
@@ -34,7 +34,7 @@ extends      Overlay
 	private final ChatMessageManager   chatManager;
 	
 	private final TroubleBrewingPlugin plugin;
-	private final TroubleBrewingConfig config;
+	private final Config               config;
 	
 	private enum Offsets
 	{
@@ -124,12 +124,12 @@ extends      Overlay
 	
 	@Inject
 	private
-	TroubleBrewingSaboOverlay(Client               client,
-	                          ModelOutlineRenderer modelOutlineRenderer,
-	                          ItemManager          itemManager,
-	                          ChatMessageManager   chatManager,
-	                          TroubleBrewingPlugin plugin,
-	                          TroubleBrewingConfig config)
+	Sabo(Client               client,
+	     ModelOutlineRenderer modelOutlineRenderer,
+	     ItemManager          itemManager,
+	     ChatMessageManager   chatManager,
+	     TroubleBrewingPlugin plugin,
+	     Config               config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
@@ -147,7 +147,7 @@ extends      Overlay
 	{
 		final Player player = client.getLocalPlayer();
 		
-		if (!TroubleBrewingUtils.inMinigame) return(null);
+		if (!Utils.inMinigame) return(null);
 		
 		for (int i = 0; i < brokenObjs.size(); ++i)
 		{
@@ -158,7 +158,7 @@ extends      Overlay
 			int           workingID    = 0;
 			
 			if (brokenObjs.get(i).getWorldLocation().distanceTo(player.getWorldLocation()) >
-			    TroubleBrewingUtils.DRAW_DISTANCE ||
+			    Utils.DRAW_DISTANCE ||
 			    brokenObjs.get(i).getWorldLocation().getPlane() !=
 			    player.getWorldLocation().getPlane())
 			{
@@ -166,12 +166,12 @@ extends      Overlay
 			}
 		
 			/* THE DEFAULT "Outline" OPTION DOES NOT WOKR FOR SOME OBJECTS (bridge)*/
-			TroubleBrewingUtils.drawHighlightedGameObject(graphics,
-			                                              modelOutlineRenderer,
-			                                              config,
-			                                              brokenObjs.get(i),
-			                                              config.highlightType(),
-			                                              Color.RED);
+			Utils.drawHighlightedGameObject(graphics,
+			                                modelOutlineRenderer,
+			                                config,
+			                                brokenObjs.get(i),
+			                                config.highlightType(),
+			                                Color.RED);
 			
 			for (Type x : Type.values())
 			{
@@ -212,27 +212,27 @@ extends      Overlay
 			    (workingID == Type.PUMP.working_id   &&
 			     id == Type.PUMP.working_id + 1))
 			{
-				icon = TroubleBrewingUtils.ICON_BUCKET_OF_WATER;
+				icon = Utils.ICON_BUCKET_OF_WATER;
 			}
 			else if (workingID == Type.PIPES_R.working_id ||
 			         workingID == Type.PIPES_B.working_id)
 			{
-				icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
+				icon = Utils.ICON_PIPE_SECTION;
 			}
 			else if (workingID == Type.HOPPER_R.working_id ||
 			         workingID == Type.HOPPER_B.working_id)
 			{
-				icon = TroubleBrewingUtils.ICON_LUMBER_PATCH;
+				icon = Utils.ICON_LUMBER_PATCH;
 			}
 			else if (workingID == Type.BRIDGE_R.working_id ||
 			         workingID == Type.BRIDGE_B.working_id)
 			{
-				icon = TroubleBrewingUtils.ICON_BRIDGE_SECTION;
+				icon = Utils.ICON_BRIDGE_SECTION;
 			}
 			else if (workingID == Type.PUMP.working_id &&
 			         id == Type.PUMP.working_id + 2)
 			{
-				icon = TroubleBrewingUtils.ICON_PIPE_SECTION;
+				icon = Utils.ICON_PIPE_SECTION;
 			}
 			
 			DrawIcon(graphics, icon, brokenObjs.get(i), iconAmount);
@@ -309,7 +309,7 @@ extends      Overlay
 		final GameObject gameObject = event.getGameObject();
 		final WorldPoint wp         = gameObject.getWorldLocation();
 		
-		if (!TroubleBrewingUtils.getTeamsHalf().contains(wp)) return;
+		if (!Utils.getTeamsHalf().contains(wp)) return;
 		if (Type.containsWorkingID(gameObject.getId())) return;
 		
 		if (trackForSaboMessage.stream().anyMatch(x ->
@@ -330,15 +330,15 @@ extends      Overlay
 			}
 			else if (workingType == Type.BRIDGE_R || workingType == Type.BRIDGE_B)
 			{
-				if (TroubleBrewingUtils.MIDDLE_WEST.contains(wp))
+				if (Utils.MIDDLE_WEST.contains(wp))
 				{
 					message = "Your team's Western Bridge has been sabotaged!";
 				}
-				else if (TroubleBrewingUtils.MIDDLE_CENTRE.contains(wp))
+				else if (Utils.MIDDLE_CENTRE.contains(wp))
 				{
 					message = "Your team's Middle Bridge has been sabotaged!";
 				}
-				else if (TroubleBrewingUtils.MIDDLE_EAST.contains(wp))
+				else if (Utils.MIDDLE_EAST.contains(wp))
 				{
 					message = "Your team's Eastern Bridge has been sabotaged!";
 				}
@@ -380,12 +380,13 @@ extends      Overlay
 		final GameObject gameObject = event.getGameObject();
 		brokenObjs.remove(gameObject);
 		
-		if (TroubleBrewingUtils.inMinigame(client) &&
+		if (Utils.inMinigame(client) &&
 		    Type.containsWorkingID(gameObject.getId()))
 		{
 			trackForSaboMessage.add(gameObject.getWorldLocation());
 		}
 	}
+	
 }
 
 
