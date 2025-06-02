@@ -22,7 +22,7 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 @Slf4j
-public class TroubleBrewingBoilerOverlay
+public class Boiler
 extends      Overlay
 {
 	private final Client               client;
@@ -30,7 +30,7 @@ extends      Overlay
 	private final ItemManager          itemManager;
 	
 	private final TroubleBrewingPlugin plugin;
-	private final TroubleBrewingConfig config;
+	private final Config               config;
 
 	private       boolean    onRedTeam;
 	private final WorldPoint redSideLocation;
@@ -56,11 +56,11 @@ extends      Overlay
 	
 	@Inject
 	private
-	TroubleBrewingBoilerOverlay(Client               client,
-	                            ModelOutlineRenderer modelOutlineRenderer,
-	                            ItemManager          itemManager,
-	                            TroubleBrewingPlugin plugin,
-	                            TroubleBrewingConfig config)
+	Boiler(Client               client,
+	       ModelOutlineRenderer modelOutlineRenderer,
+	       ItemManager          itemManager,
+	       TroubleBrewingPlugin plugin,
+	       Config               config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
@@ -161,35 +161,35 @@ extends      Overlay
 	}
 	
 	private void
-	DrawHighlightedGameObject(Graphics2D                         graphics,
-	                          GameObject                         obj,
-	                          TroubleBrewingConfig.HighlightType type,
-	                          Color                              colour)
+	DrawHighlightedGameObject(Graphics2D           graphics,
+	                          GameObject           obj,
+	                          Config.HighlightType type,
+	                          Color                colour)
 	{
-		if (type == TroubleBrewingConfig.HighlightType.NONE)
+		if (type == Config.HighlightType.NONE)
 		{
 			return;
 		}
-		else if (type == TroubleBrewingConfig.HighlightType.OUTLINE)
+		else if (type == Config.HighlightType.OUTLINE)
 		{
 			modelOutlineRenderer.drawOutline(obj, config.outlineWidth(), colour, 1);
 		}
-		else if (type == TroubleBrewingConfig.HighlightType.HULL_OUTLINE)
+		else if (type == Config.HighlightType.HULL_OUTLINE)
 		{
 			graphics.setColor(colour);
 			graphics.draw(obj.getConvexHull());
 		}
-		else if (type == TroubleBrewingConfig.HighlightType.HULL_FILLED)
+		else if (type == Config.HighlightType.HULL_FILLED)
 		{
 			graphics.setColor(colour);
 			graphics.fill(obj.getConvexHull());
 		}
-		else if (type == TroubleBrewingConfig.HighlightType.CLICKBOX_OUTLINE)
+		else if (type == Config.HighlightType.CLICKBOX_OUTLINE)
 		{
 			graphics.setColor(colour);
 			graphics.draw(obj.getClickbox());
 		}
-		else if (type == TroubleBrewingConfig.HighlightType.CLICKBOX_FILLED)
+		else if (type == Config.HighlightType.CLICKBOX_FILLED)
 		{
 			graphics.setColor(colour);
 			graphics.fill(obj.getClickbox());

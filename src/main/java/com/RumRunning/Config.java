@@ -1,7 +1,6 @@
 package com.RumRunning;
 
 import java.awt.Color;
-import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
@@ -9,8 +8,8 @@ import net.runelite.client.config.ConfigSection;
 
 
 @ConfigGroup("TroubleBrewingRumConfig")
-public interface TroubleBrewingConfig
-extends          Config
+public interface Config
+extends          net.runelite.client.config.Config
 {
 	//############################   Sections       ############################
 	
