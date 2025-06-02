@@ -32,11 +32,11 @@ extends      Plugin
 	private OverlayManager overlayManager;
 	
 	@Inject
-	private TroubleBrewingConfig          config;
+	private Config config;
 	@Inject
-	private TroubleBrewingUtils           utils;
+	private Utils  utils;
 	@Inject
-	private TroubleBrewingTemplateOverlay templateOverlay;
+	private HUD    hud;
 	
 	
 	
@@ -46,7 +46,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
-		overlayManager.add(templateOverlay);
+		overlayManager.add(hud);
 	}
 	
 	@Override
@@ -55,7 +55,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.add(utils);
-		overlayManager.remove(templateOverlay);
+		overlayManager.remove(hud);
 	}
 	
 	@Subscribe
@@ -63,7 +63,7 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		/* Call your class's gameStateChanged here, if it has one */
-		templateOverlay.gameStateChanged(gameStateChanged);
+		hud.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -71,7 +71,7 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's gameObjectSpawned here, if it has one */
-		templateOverlay.gameObjectSpawned(event);
+		hud.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -79,7 +79,14 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's gameObjectDespawned here, if it has one */
-		templateOverlay.gameObjectDespawned(event);
+		hud.gameObjectDespawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onGameTick(GameTick gameTick)
+	{
+		hud.gameTick();
 	}
 	
 	@Subscribe
@@ -91,11 +98,39 @@ extends      Plugin
 		 * it has one */
 	}
 	
+	@Subscribe
+	public void
+	onVarbitChanged(VarbitChanged event)
+	{
+		hud.varbitChanged(event);
+	}
+	
+	@Subscribe
+	public void
+	onPlayerSpawned(PlayerSpawned event)
+	{
+		hud.playerSpawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onPlayerDespawned(PlayerDespawned event)
+	{
+		hud.playerDespawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onWidgetLoaded(WidgetLoaded event)
+	{
+		hud.widgetLoaded(event);
+	}
+	
 	@Provides
-	TroubleBrewingConfig
+	Config
 	provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(TroubleBrewingConfig.class);
+		return configManager.getConfig(Config.class);
 	}
 }
 
