@@ -1,56 +1,90 @@
 
 package com.RumRunning;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.inject.Inject;
 
-import lombok.extern.slf4j.Slf4j;
-
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.GameObject;
+import net.runelite.api.GameState;
+import net.runelite.api.Perspective;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.*;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.FontManager;
-import net.runelite.client.ui.overlay.*;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 
-@Slf4j
 public class Boiler
 extends      Overlay
 {
 	private final Client               client;
 	private final ModelOutlineRenderer modelOutlineRenderer;
-	private final ItemManager          itemManager;
 	
-	private final TroubleBrewingPlugin plugin;
-	private final Config               config;
-
-	private       boolean    onRedTeam;
-	private final WorldPoint redSideLocation;
-	private final WorldPoint blueSideLocation;
+	private final Config config;
 	
-	private final BufferedImage logsIcon;
-	private final BufferedImage tinderboxIcon;
-	
-	private final int BOILER_EMPTY_IDS  [] = { 15903, 15909, 15912 };
-	private final int BOILER_HAS_LOG_IDS[] = { 15904, 15910, 15913 };
-	private final int BOILER_LIT_IDS    [] = { 15905, 15911, 15914 };
-	
-	private GameObject boilers[] = { null, null, null };
-	
-	/*
-	 * TODO:
-	 * > The boilers should all turn/flash red if the pipes have been saboed.
-	 * > Have options for colour thresholds. some people want red 0-4, 5-9 yellow
-	 *   and green at 10.
-	 * */
+	enum BoilerData
+	{
+		BOILER_1_RED (0, ObjectID.BREW_STILL_BOILER_CORNER_MIRROR, ObjectID.BREW_STILL_BOILER_CORNER_LOGS_MIRROR, ObjectID.BREW_STILL_BOILER_CORNER_FIRE_MIRROR, new Point(3811, 2999), true),
+		BOILER_2_RED (1, ObjectID.BREW_STILL_BOILER_CORNER,        ObjectID.BREW_STILL_BOILER_CORNER_LOGS,        ObjectID.BREW_STILL_BOILER_CORNER_FIRE,        new Point(3811, 3003), true),
+		BOILER_3_RED (2, ObjectID.BREW_STILL_BOILER,               ObjectID.BREW_STILL_BOILER_LOGS,               ObjectID.BREW_STILL_BOILER_FIRE,               new Point(3816, 3003), true),
+		BOILER_1_BLUE(0, ObjectID.BREW_STILL_BOILER,               ObjectID.BREW_STILL_BOILER_LOGS,               ObjectID.BREW_STILL_BOILER_FIRE,               new Point(3816, 2947), false),
+		BOILER_2_BLUE(1, ObjectID.BREW_STILL_BOILER_CORNER,        ObjectID.BREW_STILL_BOILER_CORNER_LOGS,        ObjectID.BREW_STILL_BOILER_CORNER_FIRE,        new Point(3821, 2947), false),
+		BOILER_3_BLUE(2, ObjectID.BREW_STILL_BOILER_CORNER_MIRROR, ObjectID.BREW_STILL_BOILER_CORNER_LOGS_MIRROR, ObjectID.BREW_STILL_BOILER_CORNER_FIRE_MIRROR, new Point(3821, 2951), false);
+		
+		public int        id;
+		public int        empty_id;
+		public int        has_log_id;
+		public int        lit_id;
+		public Point      position;
+		public boolean    red_side;
+		public GameObject game_object = null;
+		
+		public static BoilerData
+		match(GameObject obj)
+		{
+			final int id = obj.getId();
+			final Point objPosition = new Point(obj.getWorldLocation().getX(),
+			                                    obj.getWorldLocation().getY());
+			for (int i = 0; i < values().length; ++i)
+			{
+				if ((values()[i].empty_id == id  || values()[i].has_log_id == id ||
+				     values()[i].lit_id   == id) &&
+				    (values()[i].position.equals(objPosition)))
+				{
+					return(values()[i]);
+				}
+			}
+			
+			return(null);
+		}
+		
+		BoilerData(int id, int emptyID, int hasLogID, int litID, Point position,
+		           boolean redSide)
+		{
+			this.id         = id;
+			this.empty_id   = emptyID;
+			this.has_log_id = hasLogID;
+			this.lit_id     = litID;
+			this.position   = position;
+			this.red_side   = redSide;
+		}
+	}
+	private List<BoilerData> boilers = new ArrayList<>();
 	
 	
 	
@@ -58,100 +92,73 @@ extends      Overlay
 	private
 	Boiler(Client               client,
 	       ModelOutlineRenderer modelOutlineRenderer,
-	       ItemManager          itemManager,
-	       TroubleBrewingPlugin plugin,
 	       Config               config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
-		this.itemManager          = itemManager;
-		this.plugin               = plugin;
 		this.config               = config;
 		
-		redSideLocation  = new WorldPoint(3815, 3000, 0);
-		blueSideLocation = new WorldPoint(3815, 2950, 0);
-		
-		logsIcon      = itemManager.getImage(ItemID.LOGS);
-		tinderboxIcon = itemManager.getImage(ItemID.TINDERBOX);
+		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
 	
 	@Override
 	public Dimension
 	render(Graphics2D graphics)
 	{
-		final Player player    = client.getLocalPlayer();
-		final int    DRAW_DIST = 40; /* TODO: find how to properly do this */
-		      Widget widget;
-		      int    logCount;
+		final WorldPoint playerPos = client.getLocalPlayer().getWorldLocation();
 		
-		if (!(player.getWorldLocation().getRegionID() == 15150 &&
-		      player.getWorldLocation().getPlane()    == 0))
+		if (!Utils.inMinigame) return(null);
+		
+		for (int i = 0; i < boilers.size(); ++i)
 		{
-			return(null);
-		}
-		
-		onRedTeam = client.getItemContainer(InventoryID.EQUIPMENT)
-		                  .getItem(EquipmentInventorySlot.HEAD
-		                  .getSlotIdx()).getId() == ItemID.PIRATE_HAT;
-		
-		for (int i = 0; i < 3; ++i)
-		{
-			Color colour;
-			Point pos;
-			int   dist;
+			final BoilerData boiler = boilers.get(i);
 			
-			if (boilers[i] == null) continue;
+			WorldPoint boilerPos;
+			Color      colour;
+			int        logCount;
 			
-			/* Don't draw if they're out of distance */
-			dist = boilers[i].getWorldLocation().distanceTo(player.getWorldLocation());
-			if (dist > DRAW_DIST) continue;
+			if (boiler.game_object == null) continue;
 			
-			colour = Color.RED;
-			if      (boilers[i].getId() == BOILER_HAS_LOG_IDS[i]) colour = Color.YELLOW;
-			else if (boilers[i].getId() == BOILER_LIT_IDS    [i]) colour = Color.GREEN;
+			boilerPos = boiler.game_object.getWorldLocation();
+			if ((boilerPos.distanceTo(playerPos) > Utils.DRAW_DISTANCE)   ||
+			    (boilerPos.getPlane() != playerPos.getPlane())            ||
+			    ( Utils.onRedTeam && Utils.BLUE_HALF.contains(boilerPos)) ||
+			    (!Utils.onRedTeam && Utils.RED_HALF .contains(boilerPos)))
+			{
+				continue;
+			}
 			
-			DrawHighlightedGameObject(graphics, boilers[i], config.highlightType(), colour);
+			logCount = GetLogCount(boiler.id);
+			colour   = Color.RED;
+			
+			if      (logCount >= 3 && logCount <= 7) colour = Color.YELLOW;
+			else if (logCount >= 8)                  colour = Color.GREEN;
+			
+			if (config.displayBoilerOutline())
+			{
+				Utils.drawHighlightedGameObject(graphics, modelOutlineRenderer, config,
+				                                boiler.game_object, config.highlightType(),
+				                                colour);
+			}
 			
 			if (config.displayBoilerIcons() &&
-			    boilers[i].getId() == BOILER_EMPTY_IDS[i])
+			    boiler.game_object.getId() == boiler.has_log_id)
 			{
-				if (config.displayBoilerIcons())
-				{
-					pos = Perspective.getCanvasImageLocation(client,
-					                                         boilers[i].getLocalLocation(),
-					                                         tinderboxIcon, 150);
-					if (pos != null)
-					{
-						graphics.drawImage(logsIcon, pos.getX(), pos.getY(), null);
-					}
-				}
+				DrawIcon(graphics, boiler.game_object, Utils.ICON_TINDERBOX);
 			}
-			else if (config.displayBoilerIcons() &&
-			         boilers[i].getId() == BOILER_HAS_LOG_IDS[i])
+			else if (config.displayBoilerIcons() && logCount < 3)
 			{
-				if (config.displayBoilerIcons())
-				{
-					pos = Perspective.getCanvasImageLocation(client,
-					                                         boilers[i].getLocalLocation(),
-					                                         logsIcon, 150);
-					if (pos != null)
-					{
-						graphics.drawImage(tinderboxIcon, pos.getX(), pos.getY(), null);
-					}
-				}
+				DrawIcon(graphics, boiler.game_object, Utils.ICON_LOGS);
 			}
 			
-			if (!config.displayBoilerLogCount()) continue;
-			widget = client.getWidget(InterfaceID.BrewOverlay.BOILER1_COUNT + i);
-			pos    = boilers[i].getCanvasTextLocation(graphics, "00/00", 0);
-			if (widget != null && pos != null)
+			if (config.displayBoilerLogCount())
 			{
-				/* To better centre on boiler */
+				Point pos;
+				
+				pos = boiler.game_object.getCanvasTextLocation(graphics, "00/00", 0);
 				pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
 				
-				graphics.setFont(new Font(FontManager.getRunescapeFont().getName(),
-				                          Font.PLAIN, config.fontSize()));
-				logCount = Integer.parseInt(widget.getText());
+				graphics.setFont(Utils.FONT);
 				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10",
 				                               config.fontColour());
 			}
@@ -160,39 +167,32 @@ extends      Overlay
 		return(null);
 	}
 	
-	private void
-	DrawHighlightedGameObject(Graphics2D           graphics,
-	                          GameObject           obj,
-	                          Config.HighlightType type,
-	                          Color                colour)
+	private int
+	GetLogCount(int id)
 	{
-		if (type == Config.HighlightType.NONE)
+		int    result = 0;
+		Widget widget;
+		
+		widget = client.getWidget(InterfaceID.BrewOverlay.BOILER1_COUNT + id);
+		if (widget != null)
 		{
-			return;
+			result = Integer.parseInt(widget.getText());
 		}
-		else if (type == Config.HighlightType.OUTLINE)
+		
+		return(result);
+	}
+	
+	private void
+	DrawIcon(Graphics2D graphics, GameObject obj, BufferedImage image)
+	{
+		Point pos;
+		
+		pos = Perspective.getCanvasImageLocation(client, obj.getLocalLocation(),
+		                                         image, 150);
+		
+		if (pos != null)
 		{
-			modelOutlineRenderer.drawOutline(obj, config.outlineWidth(), colour, 1);
-		}
-		else if (type == Config.HighlightType.HULL_OUTLINE)
-		{
-			graphics.setColor(colour);
-			graphics.draw(obj.getConvexHull());
-		}
-		else if (type == Config.HighlightType.HULL_FILLED)
-		{
-			graphics.setColor(colour);
-			graphics.fill(obj.getConvexHull());
-		}
-		else if (type == Config.HighlightType.CLICKBOX_OUTLINE)
-		{
-			graphics.setColor(colour);
-			graphics.draw(obj.getClickbox());
-		}
-		else if (type == Config.HighlightType.CLICKBOX_FILLED)
-		{
-			graphics.setColor(colour);
-			graphics.fill(obj.getClickbox());
+			graphics.drawImage(image, pos.getX(), pos.getY(), null);
 		}
 	}
 	
@@ -201,10 +201,7 @@ extends      Overlay
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-			for (int i = 0; i < 3; ++i)
-			{
-				boilers[i] = null;
-			}
+			boilers.clear();
 		}
 	}
 	
@@ -212,17 +209,14 @@ extends      Overlay
 	gameObjectSpawned(GameObjectSpawned event)
 	{
 		final GameObject gameObject = event.getGameObject();
-		final int dist = onRedTeam ?
-		                 gameObject.getWorldLocation().distanceTo(redSideLocation) :
-		                 gameObject.getWorldLocation().distanceTo(blueSideLocation);
+		      BoilerData boiler;
 		
-		if (dist > 20) return;
+		if ((boiler = BoilerData.match(gameObject)) == null) return;
 		
-		for (int i = 0; i < 3; ++i)
+		boiler.game_object = gameObject;
+		if (!boilers.contains(boiler))
 		{
-			if      (gameObject.getId() == BOILER_EMPTY_IDS  [i]) boilers[i] = gameObject;
-			else if (gameObject.getId() == BOILER_HAS_LOG_IDS[i]) boilers[i] = gameObject;
-			else if (gameObject.getId() == BOILER_LIT_IDS    [i]) boilers[i] = gameObject;
+			boilers.add(boiler);
 		}
 	}
 	
@@ -230,15 +224,13 @@ extends      Overlay
 	gameObjectDespawned(GameObjectDespawned event)
 	{
 		final GameObject gameObject = event.getGameObject();
+		      BoilerData boiler;
 		
-		for (int i = 0; i < 3; ++i)
-		{
-			if ((boilers[i] != null) && (gameObject.equals(boilers[i])))
-			{
-				boilers[i] = null;
-			}
-		}
+		if ((boiler = BoilerData.match(gameObject)) == null) return;
+		
+		boilers.remove(boiler);
 	}
+	
 }
 
 

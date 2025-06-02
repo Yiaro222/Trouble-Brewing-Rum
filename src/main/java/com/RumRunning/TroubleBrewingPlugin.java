@@ -34,6 +34,8 @@ extends      Plugin
 	private Config config;
 	@Inject
 	private Boiler boiler;
+	@Inject
+	private Utils  utils;
 	
 	
 	
@@ -42,6 +44,7 @@ extends      Plugin
 	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
+		overlayManager.add(utils);
 		overlayManager.add(boiler);
 	}
 	
@@ -51,6 +54,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(boiler);
+		overlayManager.remove(utils);
 	}
 	
 	@Subscribe

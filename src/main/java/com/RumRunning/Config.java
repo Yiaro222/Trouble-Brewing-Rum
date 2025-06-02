@@ -15,12 +15,21 @@ extends          net.runelite.client.config.Config
 	
 	@ConfigSection
 	(
-		name            = "Base",
-		description     = "Options relating to the team's base.",
+		name            = "General Settings",
+		description     = "",
 		position        = 0,
 		closedByDefault = false
 	)
-	String BaseSection = "Base";
+	String GeneralSection = "General Settings";
+	
+	@ConfigSection
+	(
+		name            = "Boilers",
+		description     = "Boiler options.",
+		position        = 1,
+		closedByDefault = true
+	)
+	String BoilerSection = "Boiler Settings";
 	
 	
 	
@@ -30,9 +39,9 @@ extends          net.runelite.client.config.Config
 	(
 		keyName     = "HightlightType",
 		name        = "Hightlight Type",
-		description = "The type that is used for hightling objects",
+		description = "The type that is used for hightling all objects",
 		position    = 0,
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default HighlightType highlightType()
 	{
@@ -45,7 +54,7 @@ extends          net.runelite.client.config.Config
 		name        = "Outline Width",
 		position    = 1,
 		description = "Number of pixels used when outlining objects.",
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default int outlineWidth()
 	{
@@ -54,37 +63,11 @@ extends          net.runelite.client.config.Config
 	
 	@ConfigItem
 	(
-		keyName     = "DisplayBoilerIcons",
-		name        = "Boiler Icons",
-		position    = 2,
-		description = "Display Log/Tinderbox icon over Boilers.",
-		section     = BaseSection
-	)
-	default boolean displayBoilerIcons()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayBoilerLogCount",
-		name        = "Boiler Log Count",
-		position    = 3,
-		description = "Display log count over boilers.",
-		section     = BaseSection
-	)
-	default boolean displayBoilerLogCount()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
 		keyName     = "FontSize",
 		name        = "Font Size",
-		position    = 4,
+		position    = 2,
 		description = "Used for boiler log count.",
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default int fontSize()
 	{
@@ -96,12 +79,53 @@ extends          net.runelite.client.config.Config
 		keyName     = "FontColour",
 		name        = "Font Colour",
 		description = "Used for the boiler's font.",
-		position    = 5,
-		section     = BaseSection
+		position    = 3,
+		section     = GeneralSection
 	)
 	default Color fontColour()
 	{
 		return Color.GRAY;
+	}
+	
+	
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayBoilerIcons",
+		name        = "Boiler Icons",
+		position    = 0,
+		description = "Display Log/Tinderbox icons over Boilers.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerIcons()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayBoilerLogCount",
+		name        = "Boiler Log Count",
+		position    = 1,
+		description = "Display log count over boilers.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerLogCount()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "OutlineBoilers",
+		name        = "Outlinte Boilers",
+		position    = 2,
+		description = "Draws a coloured outline around the boilers depending on their log count.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerOutline()
+	{
+		return true;
 	}
 	
 	
