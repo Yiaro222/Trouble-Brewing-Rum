@@ -35,11 +35,11 @@ extends      Plugin
 	private ItemManager itemManager;
 	
 	@Inject
-	private TroubleBrewingConfig config;
+	private Config config;
 	@Inject
-	private TroubleBrewingUtils  utils;
+	private Utils  utils;
 	@Inject
-	private TroubleBrewingMES    mes;
+	private MES    mes;
 	
 	
 	
@@ -49,7 +49,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
-		mes = new TroubleBrewingMES(client, itemManager, this, config, utils);
+		mes = new MES(client, config);
 	}
 	
 	@Override
@@ -105,10 +105,10 @@ extends      Plugin
 	}
 	
 	@Provides
-	TroubleBrewingConfig
+	Config
 	provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(TroubleBrewingConfig.class);
+		return configManager.getConfig(Config.class);
 	}
 }
 

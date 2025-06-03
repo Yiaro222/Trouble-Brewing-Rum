@@ -1,7 +1,6 @@
 package com.RumRunning;
 
 import java.awt.Color;
-import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
@@ -9,28 +8,28 @@ import net.runelite.client.config.ConfigSection;
 
 
 @ConfigGroup("TroubleBrewingRumConfig")
-public interface TroubleBrewingConfig
-extends          Config
+public interface Config
+extends          net.runelite.client.config.Config
 {
 	//############################   Sections       ############################
 	
 	@ConfigSection
 	(
-		name            = "General",
-		description     = "General Options.",
+		name            = "General Settings",
+		description     = "",
 		position        = 0,
 		closedByDefault = false
 	)
-	String GeneralSection = "General";
+	String GeneralSection = "General Settings";
 	
 	@ConfigSection
 	(
-		name            = "Base",
-		description     = "Options relating to the team's base.",
+		name            = "Menu Entry Swap Options",
+		description     = "",
 		position        = 1,
-		closedByDefault = false
+		closedByDefault = true
 	)
-	String BaseSection = "Base";
+	String MESSection = "MES";
 	
 	
 	
@@ -42,7 +41,7 @@ extends          Config
 		name        = "Hightlight Type",
 		description = "The type that is used for hightling objects",
 		position    = 0,
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default HighlightType highlightType()
 	{
@@ -55,7 +54,7 @@ extends          Config
 		name        = "Outline Width",
 		position    = 1,
 		description = "Number of pixels used when outlining objects.",
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default int outlineWidth()
 	{
@@ -66,7 +65,7 @@ extends          Config
 	(
 		keyName     = "FontSize",
 		name        = "Font Size",
-		position    = 0,
+		position    = 2,
 		description = "Used for boiler log count.",
 		section     = GeneralSection
 	)
@@ -80,12 +79,25 @@ extends          Config
 		keyName     = "FontColour",
 		name        = "Font Colour",
 		description = "Used for the boiler's font.",
-		position    = 1,
+		position    = 3,
 		section     = GeneralSection
 	)
 	default Color fontColour()
 	{
 		return Color.GRAY;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "MES",
+		name        = "Enable",
+		position    = 0,
+		description = "Left click swaps",
+		section     = MESSection
+	)
+	default boolean enableMES()
+	{
+		return true;
 	}
 	
 	
