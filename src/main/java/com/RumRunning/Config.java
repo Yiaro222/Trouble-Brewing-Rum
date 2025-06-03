@@ -49,6 +49,16 @@ extends          net.runelite.client.config.Config
 	)
 	String ResourceSection = "Resoure Gathering";
 	
+	@ConfigSection
+	(
+		name            = "Sabotage",
+		description     = "Sabotage Options",
+		position        = 1,
+		closedByDefault = true
+	)
+	String SaboSection = "Sabo";
+	
+	
 	
 	//############################   Config Items   ############################
 	
@@ -145,6 +155,36 @@ extends          net.runelite.client.config.Config
 		return true;
 	}
 	
+	
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboOutline",
+		name        = "Outline Sabotaged Objects",
+		position    = 0,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displaySaboOutline()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboRepairItems",
+		name        = "Repair Items",
+		position    = 1,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displayRepairItems()
+	{
+		return true;
+	}
+	
+	
+	
 	@ConfigItem
 	(
 		keyName     = "MES",
@@ -172,6 +212,7 @@ extends          net.runelite.client.config.Config
 	{
 		return true;
 	}
+	
 	
 	
 	//############################   Enums          ############################

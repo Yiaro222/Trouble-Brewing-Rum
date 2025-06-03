@@ -10,10 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -28,11 +28,11 @@ public class TroubleBrewingPlugin
 extends      Plugin
 {
 	@Inject
-	private Client         client;
+	private Client             client;
 	@Inject
-	private OverlayManager overlayManager;
+	private OverlayManager     overlayManager;
 	@Inject
-	private ItemManager itemManager;
+	private ChatMessageManager chatManager;
 	
 	@Inject
 	private Config config;
@@ -44,6 +44,8 @@ extends      Plugin
 	private MES    mes;
 	@Inject
 	private TroubleBrewingBarkOverlay barkOverlay;
+	@Inject
+	private Sabo   sabo;
 	
 	
 	
@@ -55,6 +57,7 @@ extends      Plugin
 		overlayManager.add(utils);
 		overlayManager.add(boiler);
 		overlayManager.add(barkOverlay);
+		overlayManager.add(sabo);
 		
 		mes = new MES(client, config);
 	}
@@ -66,6 +69,7 @@ extends      Plugin
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(boiler);
 		overlayManager.remove(barkOverlay);
+		overlayManager.remove(sabo);
 		overlayManager.remove(utils);
 	}
 	
@@ -75,6 +79,7 @@ extends      Plugin
 	{
 		boiler.gameStateChanged(gameStateChanged);
 		barkOverlay.gameStateChanged(gameStateChanged);
+		sabo.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -96,6 +101,7 @@ extends      Plugin
 	{
 		boiler.gameObjectSpawned(event);
 		barkOverlay.gameObjectSpawned(event);
+		sabo.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -104,6 +110,7 @@ extends      Plugin
 	{
 		boiler.gameObjectDespawned(event);
 		barkOverlay.gameObjectDespawned(event);
+		sabo.gameObjectDespawned(event);
 	}
 	
 	@Subscribe

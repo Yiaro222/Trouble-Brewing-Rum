@@ -26,8 +26,7 @@ extends      Overlay
     private final ModelOutlineRenderer modelOutlineRenderer;
     private final ItemManager          itemManager;
 
-    private final TroubleBrewingPlugin plugin;
-    private final Config               config;
+    private final Config config;
 
     public static boolean inMinigame;
     public static boolean onRedTeam;
@@ -67,18 +66,18 @@ extends      Overlay
 
     public static Font FONT;
 
+
+    
     @Inject
     private
     Utils(Client               client,
           ModelOutlineRenderer modelOutlineRenderer,
           ItemManager          itemManager,
-          TroubleBrewingPlugin plugin,
           Config               config)
     {
         this.client               = client;
         this.modelOutlineRenderer = modelOutlineRenderer;
         this.itemManager          = itemManager;
-        this.plugin               = plugin;
         this.config               = config;
         
         ICON_LOGS            = itemManager.getImage(ItemID.LOGS);
