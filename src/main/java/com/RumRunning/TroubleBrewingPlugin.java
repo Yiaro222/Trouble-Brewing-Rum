@@ -43,9 +43,11 @@ extends      Plugin
 	@Inject
 	private MES    mes;
 	@Inject
+	private Sabo   sabo;
+	@Inject
 	private TroubleBrewingBarkOverlay barkOverlay;
 	@Inject
-	private Sabo   sabo;
+	private TroubleBrewingGrubOverlay grubOverlay;
 	
 	
 	
@@ -56,6 +58,7 @@ extends      Plugin
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
 		overlayManager.add(boiler);
+		overlayManager.add(grubOverlay);
 		overlayManager.add(barkOverlay);
 		overlayManager.add(sabo);
 		
@@ -70,6 +73,7 @@ extends      Plugin
 		overlayManager.remove(boiler);
 		overlayManager.remove(barkOverlay);
 		overlayManager.remove(sabo);
+		overlayManager.remove(grubOverlay);
 		overlayManager.remove(utils);
 	}
 	
@@ -79,6 +83,7 @@ extends      Plugin
 	{
 		boiler.gameStateChanged(gameStateChanged);
 		barkOverlay.gameStateChanged(gameStateChanged);
+		grubOverlay.gameStateChanged(gameStateChanged);
 		sabo.gameStateChanged(gameStateChanged);
 	}
 	
@@ -101,6 +106,7 @@ extends      Plugin
 	{
 		boiler.gameObjectSpawned(event);
 		barkOverlay.gameObjectSpawned(event);
+		grubOverlay.gameObjectSpawned(event);
 		sabo.gameObjectSpawned(event);
 	}
 	
@@ -110,7 +116,22 @@ extends      Plugin
 	{
 		boiler.gameObjectDespawned(event);
 		barkOverlay.gameObjectDespawned(event);
+		grubOverlay.gameObjectDespawned(event);
 		sabo.gameObjectDespawned(event);
+	}
+
+	@Subscribe
+	public void
+	onNpcSpawned(NpcSpawned event)
+	{
+		grubOverlay.onNpcSpawned(event);
+	}
+
+	@Subscribe
+	public void
+	onNpcDespawned(NpcDespawned event)
+	{
+		grubOverlay.onNpcDespawned(event);
 	}
 	
 	@Subscribe
