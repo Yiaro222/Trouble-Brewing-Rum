@@ -35,11 +35,19 @@ extends          net.runelite.client.config.Config
 	(
 		name            = "Menu Entry Swap Options",
 		description     = "",
-		position        = 1,
+		position        = 2,
 		closedByDefault = true
 	)
 	String MESSection = "MES";
 	
+	@ConfigSection
+	(
+		name            = "Resource Gathering",
+		description     = "",
+		position        = 3,
+		closedByDefault = true
+	)
+	String ResourceSection = "Resoure Gathering";
 	
 	
 	//############################   Config Items   ############################
@@ -146,6 +154,21 @@ extends          net.runelite.client.config.Config
 		section     = MESSection
 	)
 	default boolean enableMES()
+	{
+		return true;
+	}
+	
+	
+	
+	@ConfigItem
+	(
+		keyName     = "EnableScrapeyTreeInfo",
+		name        = "Enable Scrapey Tree Info",
+		position    = 0,
+		description = "Adds outlines and spawn timers",
+		section     = ResourceSection
+	)
+	default boolean enableTreeInfo()
 	{
 		return true;
 	}
