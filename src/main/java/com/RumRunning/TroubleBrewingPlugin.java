@@ -1,53 +1,91 @@
+
 package com.RumRunning;
 
-import com.google.inject.Provides;
 import javax.inject.Inject;
+
+import com.google.inject.Provides;
+
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
+
+import net.runelite.api.*;
+import net.runelite.api.events.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
+
+
 
 @Slf4j
 @PluginDescriptor(
 	name = "Trouble Brewing Rum"
 )
-public class TroubleBrewingPlugin extends Plugin
+public class TroubleBrewingPlugin
+extends      Plugin
 {
 	@Inject
-	private Client client;
-
+	private Client         client;
 	@Inject
-	private TroubleBrewingConfig config;
-
+	private OverlayManager overlayManager;
+	
+	@Inject
+	private Config config;
+	@Inject
+	private Boiler boiler;
+	@Inject
+	private Utils  utils;
+	
+	
+	
 	@Override
-	protected void startUp() throws Exception
+	protected void
+	startUp() throws Exception
 	{
 		log.info(" ##### Plugin started! ##### ");
+		overlayManager.add(utils);
+		overlayManager.add(boiler);
 	}
-
+	
 	@Override
-	protected void shutDown() throws Exception
+	protected void
+	shutDown() throws Exception
 	{
 		log.info(" ##### Plugin stopped! ##### ");
+		overlayManager.remove(boiler);
+		overlayManager.remove(utils);
 	}
-
+	
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	public void
+	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
-		}
+		boiler.gameStateChanged(gameStateChanged);
 	}
-
+	
+	@Subscribe
+	public void
+	onGameObjectSpawned(GameObjectSpawned event)
+	{
+		boiler.gameObjectSpawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onGameObjectDespawned(GameObjectDespawned event)
+	{
+		boiler.gameObjectDespawned(event);
+	}
+	
 	@Provides
-	TroubleBrewingConfig provideConfig(ConfigManager configManager)
+	Config
+	provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(TroubleBrewingConfig.class);
+		return configManager.getConfig(Config.class);
 	}
+	
 }
+
+
+
