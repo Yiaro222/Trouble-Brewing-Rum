@@ -116,6 +116,7 @@ extends      Overlay
 	 * > Highlight the required items on the table UI
 	 * > Add a timer (or something) so the chatbox doesnt get nuked with messages
 	 *   if the player joins midgame to a base which is half saboed
+	 * > It re-displays the "X has been sabotaged" message when repairing
 	 * */
 	
 	

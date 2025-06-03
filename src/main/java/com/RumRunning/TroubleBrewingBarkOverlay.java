@@ -55,6 +55,8 @@ extends      Overlay
 			return(null);
 		}
 		
+		if (!config.enableTreeInfo()) return(null);
+		
 		//Check if player is inside of Trouble Brewing
 		if (!Utils.inMinigame) return(null);
 		

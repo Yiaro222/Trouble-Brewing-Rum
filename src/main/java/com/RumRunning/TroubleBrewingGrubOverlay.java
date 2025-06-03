@@ -53,6 +53,8 @@ extends      Overlay
 	public Dimension
 	render(Graphics2D graphics)
 	{
+		if (!config.enableSweetgrubInfo()) return(null);
+		
 		//Check if player is ingame
 		if (client.getLocalPlayer() == null)
 		{
@@ -74,24 +76,24 @@ extends      Overlay
 			if (grubMounds[i].getId() == ObjectID.BREW_SWEETGRUB_MOUND)
 			{
 				Utils.drawHighlightedGameObject(graphics,
-						modelOutlineRenderer,
-						config,
-						grubMounds[i],
-						config.highlightType(),
-						Color.GREEN);
+				                                modelOutlineRenderer,
+				                                config,
+				                                grubMounds[i],
+				                                config.highlightType(),
+				                                Color.GREEN);
 			}
 			else if (grubMounds[i].getId() == ObjectID.BREW_SWEETGRUB_MOUND_DEPELETED)
 			{
 				Utils.drawHighlightedGameObject(graphics,
-						modelOutlineRenderer,
-						config,
-						grubMounds[i],
-						config.highlightType(),
-						Color.RED);
+				                                modelOutlineRenderer,
+				                                config,
+				                                grubMounds[i],
+				                                config.highlightType(),
+				                                Color.RED);
 			}
 		}
 		
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < swarmNpc.length; ++i)
 		{
 			if (swarmNpc[i] == null) continue;
 			
@@ -208,7 +210,7 @@ extends      Overlay
 	{
 		if (gameStateChanged.getGameState() == GameState.LOADING)
 		{
-			for (int i = 0; i < 9; ++i)
+			for (int i = 0; i < grubMounds.length; ++i)
 			{
 				grubMounds[i] = null;
 				swarmNpc  [i] = null;
@@ -226,7 +228,7 @@ extends      Overlay
 		      gameObject.getId() == ObjectID.BREW_SWEETGRUB_MOUND_DEPELETED))
 			return;
 		
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < grubMounds.length; ++i)
 		{
 			if (grubMounds[i]  == null)
 			{
@@ -241,7 +243,7 @@ extends      Overlay
 	{
 		final GameObject gameObject = event.getGameObject();
 		
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < grubMounds.length; ++i)
 		{
 			if ((grubMounds[i] != null) && (gameObject.equals(grubMounds[i])))
 			{
@@ -258,7 +260,7 @@ extends      Overlay
 		if (!(npc.getId() == NpcID.BREW_SWARM))
 			return;
 		
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < swarmNpc.length; ++i)
 		{
 			if (swarmNpc[i]  == null)
 			{
@@ -272,7 +274,7 @@ extends      Overlay
 	{
 		NPC npc = event.getNpc();
 		
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < swarmNpc.length; ++i)
 		{
 			if ((swarmNpc[i] != null) && (npc.equals(swarmNpc[i])))
 			{

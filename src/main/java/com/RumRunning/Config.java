@@ -145,7 +145,7 @@ extends          net.runelite.client.config.Config
 	@ConfigItem
 	(
 		keyName     = "OutlineBoilers",
-		name        = "Outlinte Boilers",
+		name        = "Outline Boilers",
 		position    = 2,
 		description = "Draws a coloured outline around the boilers depending on their log count.",
 		section     = BoilerSection
@@ -213,6 +213,18 @@ extends          net.runelite.client.config.Config
 		return true;
 	}
 	
+	@ConfigItem
+	(
+		keyName     = "EnableSweetgrubInfo",
+		name        = "Enable Sweetgrub Info",
+		position    = 1,
+		description = "Adds outlines to mounds and aggression zone for sweetgrubs",
+		section     = ResourceSection
+	)
+	default boolean enableSweetgrubInfo()
+	{
+		return true;
+	}
 	
 	
 	//############################   Enums          ############################
