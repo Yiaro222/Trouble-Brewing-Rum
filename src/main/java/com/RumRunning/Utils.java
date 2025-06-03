@@ -16,6 +16,8 @@ import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+
+
 @Slf4j
 public class Utils
 extends      Overlay
@@ -46,8 +48,9 @@ extends      Overlay
     public static final WorldArea MIDDLE_EAST   = new WorldArea(3820, 2959, 17, 30, 0);
     public static final WorldArea MIDDLE_WEST   = new WorldArea(3781, 2959, 19, 30, 0);
 
-    /* It's possible multiple of these are true at once. These are just rectangles, so when in a lobby, the player will
-     * also be contained in NEAR_LOBBY. */
+    /* It's possible multiple of these are true at once. These are just
+     * rectangles, so when in a lobby, the player will also be contained in
+     * NEAR_LOBBY. */
     public static final WorldArea RED_TEAM_LOBBY             = new WorldArea(3803, 3010, 10, 10, 0);
     public static final WorldArea BLUE_TEAM_LOBBY            = new WorldArea(3813, 3010, 10, 10, 0);
     public static final WorldArea BLUE_TEAM_LOBBY_SKIP_TILES = new WorldArea(3822, 3010, 1,  10, 0);
@@ -65,11 +68,12 @@ extends      Overlay
     public static Font FONT;
 
     @Inject
-    private Utils(Client               client,
-                  ModelOutlineRenderer modelOutlineRenderer,
-                  ItemManager          itemManager,
-                  TroubleBrewingPlugin plugin,
-                  Config config)
+    private
+    Utils(Client               client,
+          ModelOutlineRenderer modelOutlineRenderer,
+          ItemManager          itemManager,
+          TroubleBrewingPlugin plugin,
+          Config               config)
     {
         this.client               = client;
         this.modelOutlineRenderer = modelOutlineRenderer;

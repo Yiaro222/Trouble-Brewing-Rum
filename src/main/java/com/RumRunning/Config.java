@@ -31,6 +31,15 @@ extends          net.runelite.client.config.Config
 	)
 	String BoilerSection = "Boiler Settings";
 	
+	@ConfigSection
+	(
+		name            = "Menu Entry Swap Options",
+		description     = "",
+		position        = 1,
+		closedByDefault = true
+	)
+	String MESSection = "MES";
+	
 	
 	
 	//############################   Config Items   ############################
@@ -39,7 +48,7 @@ extends          net.runelite.client.config.Config
 	(
 		keyName     = "HightlightType",
 		name        = "Hightlight Type",
-		description = "The type that is used for hightling all objects",
+		description = "The type that is used for highlighting all objects",
 		position    = 0,
 		section     = GeneralSection
 	)
@@ -128,6 +137,18 @@ extends          net.runelite.client.config.Config
 		return true;
 	}
 	
+	@ConfigItem
+	(
+		keyName     = "MES",
+		name        = "Enable",
+		position    = 0,
+		description = "Left click swaps",
+		section     = MESSection
+	)
+	default boolean enableMES()
+	{
+		return true;
+	}
 	
 	
 	//############################   Enums          ############################

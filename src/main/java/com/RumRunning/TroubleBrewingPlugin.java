@@ -12,6 +12,8 @@ import net.runelite.api.events.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -29,13 +31,17 @@ extends      Plugin
 	private Client         client;
 	@Inject
 	private OverlayManager overlayManager;
+	@Inject
+	private ItemManager itemManager;
 	
 	@Inject
 	private Config config;
 	@Inject
+	private Utils  utils;
+	@Inject
 	private Boiler boiler;
 	@Inject
-	private Utils  utils;
+	private MES    mes;
 	
 	
 	
@@ -46,6 +52,8 @@ extends      Plugin
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
 		overlayManager.add(boiler);
+		
+		mes = new MES(client, config);
 	}
 	
 	@Override
@@ -66,6 +74,19 @@ extends      Plugin
 	
 	@Subscribe
 	public void
+	onPostMenuSort(PostMenuSort postMenuSort)
+	{
+		mes.postMenuSort(postMenuSort);
+	}
+	
+	@Subscribe
+	public void
+	onClientTick(ClientTick clientTick)
+	{
+	}
+	
+	@Subscribe
+	public void
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		boiler.gameObjectSpawned(event);
@@ -76,6 +97,13 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		boiler.gameObjectDespawned(event);
+	}
+	
+	@Subscribe
+	public void
+	onConfigChanged(ConfigChanged event)
+	{
+		utils.configChanged(event);
 	}
 	
 	@Provides
