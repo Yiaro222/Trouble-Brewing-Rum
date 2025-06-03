@@ -42,6 +42,8 @@ extends      Plugin
 	private Boiler boiler;
 	@Inject
 	private MES    mes;
+	@Inject
+	private TroubleBrewingBarkOverlay barkOverlay;
 	
 	
 	
@@ -52,6 +54,7 @@ extends      Plugin
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
 		overlayManager.add(boiler);
+		overlayManager.add(barkOverlay);
 		
 		mes = new MES(client, config);
 	}
@@ -62,6 +65,7 @@ extends      Plugin
 	{
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(boiler);
+		overlayManager.remove(barkOverlay);
 		overlayManager.remove(utils);
 	}
 	
@@ -70,6 +74,7 @@ extends      Plugin
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		boiler.gameStateChanged(gameStateChanged);
+		barkOverlay.gameStateChanged(gameStateChanged);
 	}
 	
 	@Subscribe
@@ -90,6 +95,7 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		boiler.gameObjectSpawned(event);
+		barkOverlay.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -97,6 +103,7 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		boiler.gameObjectDespawned(event);
+		barkOverlay.gameObjectDespawned(event);
 	}
 	
 	@Subscribe
