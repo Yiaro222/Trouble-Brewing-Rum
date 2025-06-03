@@ -5,6 +5,7 @@ import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.api.kit.KitType;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.FontManager;
@@ -23,7 +24,8 @@ extends      Overlay
     private final ModelOutlineRenderer modelOutlineRenderer;
     private final ItemManager          itemManager;
 
-    private final Config config;
+    private final TroubleBrewingPlugin plugin;
+    private final Config               config;
 
     public static boolean inMinigame;
     public static boolean onRedTeam;
@@ -67,11 +69,13 @@ extends      Overlay
     Utils(Client               client,
           ModelOutlineRenderer modelOutlineRenderer,
           ItemManager          itemManager,
+          TroubleBrewingPlugin plugin,
           Config               config)
     {
         this.client               = client;
         this.modelOutlineRenderer = modelOutlineRenderer;
         this.itemManager          = itemManager;
+        this.plugin               = plugin;
         this.config               = config;
         
         ICON_LOGS            = itemManager.getImage(ItemID.LOGS);
@@ -89,7 +93,8 @@ extends      Overlay
     render(Graphics2D graphics)
     {
         inMinigame(client);
-        onRedTeam(client);
+        if (inMinigame)
+            onRedTeam(client);
 
         return null;
     }
@@ -100,11 +105,11 @@ extends      Overlay
         final Player player = client.getLocalPlayer();
 
         // Check if player is inside the Minigame chunk
-        if (!(player.getWorldLocation().getRegionID() == 15150))
+        if (player.getWorldLocation().getRegionID() == 15150)
         {
-             inMinigame = false;
+             inMinigame = true;
         }
-        else inMinigame = true;
+        else inMinigame = false;
 
         return inMinigame;
     }
@@ -112,9 +117,12 @@ extends      Overlay
     public static boolean
     onRedTeam(Client client)
     {
-        onRedTeam = client.getItemContainer(InventoryID.EQUIPMENT)
-                          .getItem(EquipmentInventorySlot.HEAD
-                          .getSlotIdx()).getId() == ItemID.BREW_RED_PIRATE_HAT;
+        int headSlot;
+        
+        headSlot = client.getLocalPlayer()
+                         .getPlayerComposition().getEquipmentId(KitType.HEAD);
+        onRedTeam = headSlot == ItemID.BREW_RED_PIRATE_HAT;
+        
         return onRedTeam;
     }
 

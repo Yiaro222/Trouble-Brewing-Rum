@@ -1,30 +1,39 @@
 
 package com.RumRunning;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
 import javax.inject.Inject;
 
-import lombok.extern.slf4j.Slf4j;
-
-import net.runelite.api.*;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
+import net.runelite.api.GameObject;
+import net.runelite.api.GameState;
+import net.runelite.api.Perspective;
 import net.runelite.api.Point;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.*;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.overlay.*;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 
-@Slf4j
 public class Sabo
 extends      Overlay
 {
@@ -33,8 +42,7 @@ extends      Overlay
 	private final ItemManager          itemManager;
 	private final ChatMessageManager   chatManager;
 	
-	private final TroubleBrewingPlugin plugin;
-	private final Config               config;
+	private final Config config;
 	
 	private enum Offsets
 	{
@@ -52,20 +60,19 @@ extends      Overlay
 	
 	private enum Type
 	{
-		PIPES_R (15837, 8930, true),
-		PIPES_B (15863, 8930, false),
-		HOPPER_R(15847, 8932, true),
-		HOPPER_B(15873, 8932, false),
-		BRIDGE_R(15855, 8979, true),
-		BRIDGE_B(15881, 8979, true),
+		PIPES_R (ObjectID.BREW_PIPES_RED,   ItemID.BREW_PIPE_SECTION,   true),
+		PIPES_B (ObjectID.BREW_PIPES_BLUE,  ItemID.BREW_PIPE_SECTION,   false),
+		HOPPER_R(ObjectID.BREW_HOPPER_RED,  ItemID.BREW_LUMBER_PATCH,   true),
+		HOPPER_B(ObjectID.BREW_HOPPER_BLUE, ItemID.BREW_LUMBER_PATCH,   false),
+		BRIDGE_R(ObjectID.BREW_BRIDGE_RED,  ItemID.BREW_BRIDGE_SECTION, true),
+		BRIDGE_B(ObjectID.BREW_BRIDGE_BLUE, ItemID.BREW_BRIDGE_SECTION, true),
 		
 		/* Both sides have the same ID, and a different repair system, so this will
 		 * have to be handled differently throughout the code. */
-		PUMP(15936, 8930, false);
+		PUMP(ObjectID.BREW_WATER_PUMP, ItemID.BREW_PIPE_SECTION, false);
 		
-		public final int     working_id;
-		public final int     repair_item_id;
-		public final boolean on_red_side;
+		public final int working_id;
+		public final int repair_item_id;
 		
 		public static Type
 		getWorkingType(int id)
@@ -97,8 +104,6 @@ extends      Overlay
 		{
 			working_id     = workingID;
 			repair_item_id = repairItemID;
-			on_red_side    = redSide;
-			
 		}
 	};
 	
@@ -108,16 +113,9 @@ extends      Overlay
 	/*
 	 * TODO:
 	 * > Have a notification when saboed
-	 * > Add other flammable objects like trees
 	 * > Highlight the required items on the table UI
-	 * > Add a highlight / background to the icons, its hard to tell which icon
-	 *   is showing bcus its the same colour as its surroundings - mostly true
-	 *   for the bridge section
 	 * > Add a timer (or something) so the chatbox doesnt get nuked with messages
-	 *   if the player joins midgame to a room half saboed
-	 * > Fix the weird perspective issue with icons
-	 * > Fix the arrangement of icons in DrawIconThree(...) (pipes overlap)
-	 * > Test, test, test
+	 *   if the player joins midgame to a base which is half saboed
 	 * */
 	
 	
@@ -128,14 +126,12 @@ extends      Overlay
 	     ModelOutlineRenderer modelOutlineRenderer,
 	     ItemManager          itemManager,
 	     ChatMessageManager   chatManager,
-	     TroubleBrewingPlugin plugin,
 	     Config               config)
 	{
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.itemManager          = itemManager;
 		this.chatManager          = chatManager;
-		this.plugin               = plugin;
 		this.config               = config;
 		
 		setLayer(OverlayLayer.ABOVE_SCENE);
@@ -145,7 +141,7 @@ extends      Overlay
 	public Dimension
 	render(Graphics2D graphics)
 	{
-		final Player player = client.getLocalPlayer();
+		final WorldPoint playerPos = client.getLocalPlayer().getWorldLocation();
 		
 		if (!Utils.inMinigame) return(null);
 		
@@ -153,25 +149,28 @@ extends      Overlay
 		{
 			final int id = brokenObjs.get(i).getId();
 			
-			BufferedImage icon         = null;
-			int           iconAmount   = 0;
-			int           workingID    = 0;
+			BufferedImage icon          = null;
+			Color         outlineColour = null;
+			int           iconAmount    = 0;
+			int           workingID     = 0;
+			WorldPoint    objPos;
 			
-			if (brokenObjs.get(i).getWorldLocation().distanceTo(player.getWorldLocation()) >
-			    Utils.DRAW_DISTANCE ||
-			    brokenObjs.get(i).getWorldLocation().getPlane() !=
-			    player.getWorldLocation().getPlane())
+			objPos = brokenObjs.get(i).getWorldLocation();
+			if (objPos.distanceTo(playerPos) > Utils.DRAW_DISTANCE ||
+			    objPos.getPlane() != playerPos.getPlane())
 			{
 				continue;
 			}
-		
-			/* THE DEFAULT "Outline" OPTION DOES NOT WOKR FOR SOME OBJECTS (bridge)*/
-			Utils.drawHighlightedGameObject(graphics,
-			                                modelOutlineRenderer,
-			                                config,
-			                                brokenObjs.get(i),
-			                                config.highlightType(),
-			                                Color.RED);
+			
+			if (config.displaySaboOutline())
+			{
+				Utils.drawHighlightedGameObject(graphics,
+				                                modelOutlineRenderer,
+				                                config,
+				                                brokenObjs.get(i),
+				                                config.highlightType(),
+				                                Color.RED);
+			}
 			
 			for (Type x : Type.values())
 			{
@@ -222,12 +221,14 @@ extends      Overlay
 			else if (workingID == Type.HOPPER_R.working_id ||
 			         workingID == Type.HOPPER_B.working_id)
 			{
-				icon = Utils.ICON_LUMBER_PATCH;
+				icon          = Utils.ICON_LUMBER_PATCH;
+				outlineColour = Color.WHITE;
 			}
 			else if (workingID == Type.BRIDGE_R.working_id ||
 			         workingID == Type.BRIDGE_B.working_id)
 			{
-				icon = Utils.ICON_BRIDGE_SECTION;
+				icon          = Utils.ICON_BRIDGE_SECTION;
+				outlineColour = Color.WHITE;
 			}
 			else if (workingID == Type.PUMP.working_id &&
 			         id == Type.PUMP.working_id + 2)
@@ -235,64 +236,83 @@ extends      Overlay
 				icon = Utils.ICON_PIPE_SECTION;
 			}
 			
-			DrawIcon(graphics, icon, brokenObjs.get(i), iconAmount);
+			if (config.displayRepairItems())
+			{
+				DrawIcon(graphics, icon, brokenObjs.get(i), iconAmount, outlineColour);
+			}
 		}
 		
 		return(null);
 	}
 	
 	private void
-	DrawIconThree(Graphics2D graphics, BufferedImage icon, GameObject gameObject)
+	DrawIconThree(Graphics2D graphics, BufferedImage icon, GameObject gameObject,
+	              Color outlineColour)
 	{
-		Point p = gameObject.getCanvasLocation(150);
-		if (icon == null || p == null) return;
+		if (icon == null) return;
 		
-		p = new Point(p.getX() - 11, p.getY());
-		DrawIcon(graphics, icon, p);
-		p = new Point(p.getX() + 11, p.getY() - 6);
-		DrawIcon(graphics, icon, p);
-		p = new Point(p.getX() + 15, p.getY() + 6);
-		DrawIcon(graphics, icon, p);
+		DrawIcon(graphics, icon, GetPosition(gameObject, icon, -22,   0), outlineColour);
+		DrawIcon(graphics, icon, GetPosition(gameObject, icon,   0, -15), outlineColour);
+		DrawIcon(graphics, icon, GetPosition(gameObject, icon,  25,  -2), outlineColour);
 	}
 	
 	private void
-	DrawIconTwo(Graphics2D graphics, BufferedImage icon, GameObject gameObject)
+	DrawIconTwo(Graphics2D graphics, BufferedImage icon, GameObject gameObject,
+	            Color outlineColour)
 	{
-		Point p = gameObject.getCanvasLocation(150);
-		if (icon == null || p == null) return;
+		if (icon == null) return;
 		
-		p = new Point(p.getX() - 4, p.getY());
-		DrawIcon(graphics, icon, p);
-		p = new Point(p.getX() + 8, p.getY() - 1);
-		DrawIcon(graphics, icon, p);
+		DrawIcon(graphics, icon, GetPosition(gameObject, icon, -15, 0), outlineColour);
+		DrawIcon(graphics, icon, GetPosition(gameObject, icon,  15, 0), outlineColour);
 	}
 	
 	private void
-	DrawIcon(Graphics2D graphics, BufferedImage icon, Point point)
+	DrawIcon(Graphics2D graphics, BufferedImage icon, Point point,
+	         Color outlineColour)
 	{
+		BufferedImage outline;
+		
 		if (icon == null || point == null) return;
 		graphics.drawImage(icon, point.getX(), point.getY(), null);
+		
+		if (outlineColour != null)
+		{
+			outline = itemManager.getItemOutline(ItemID.BREW_BRIDGE_SECTION, 2,
+			                                     outlineColour);
+			graphics.drawImage(outline, point.getX(), point.getY(), null);
+		}
 	}
 	
 	private void
 	DrawIcon(Graphics2D graphics, BufferedImage icon, GameObject gameObject,
-	         int amount)
+	         int amount, Color outlineColour)
 	{
 		if (amount == 1)
 		{
-			DrawIcon(graphics, icon, gameObject.getCanvasLocation(150));
+			DrawIcon(graphics, icon, GetPosition(gameObject, icon, 0, 0), outlineColour);
 		}
 		else if (amount == 2)
 		{
-			DrawIconTwo(graphics, icon, gameObject);
+			DrawIconTwo(graphics, icon, gameObject, outlineColour);
 		}
 		else if (amount == 3)
 		{
-			DrawIconThree(graphics, icon, gameObject);
+			DrawIconThree(graphics, icon, gameObject, outlineColour);
 		}
 		else {  }
 	}
 	
+	private Point
+	GetPosition(GameObject obj, BufferedImage image, int offsetX, int offsetY)
+	{
+		LocalPoint lp;
+		
+		lp = obj.getLocalLocation();
+		lp = new LocalPoint(lp.getX() + offsetX, lp.getY() + offsetY,
+		                    lp.getWorldView());
+		
+		return(Perspective.getCanvasImageLocation(client, lp, image, 100));
+	}
 	
 	public void
 	gameStateChanged(GameStateChanged gameStateChanged)
@@ -309,7 +329,7 @@ extends      Overlay
 		final GameObject gameObject = event.getGameObject();
 		final WorldPoint wp         = gameObject.getWorldLocation();
 		
-		if (!Utils.getTeamsHalf().contains(wp)) return;
+		if (!Utils.getTeamsHalf().contains(wp))         return;
 		if (Type.containsWorkingID(gameObject.getId())) return;
 		
 		if (trackForSaboMessage.stream().anyMatch(x ->

@@ -15,21 +15,21 @@ extends          net.runelite.client.config.Config
 	
 	@ConfigSection
 	(
-		name            = "General",
-		description     = "General Options.",
+		name            = "General Settings",
+		description     = "",
 		position        = 0,
 		closedByDefault = false
 	)
-	String GeneralSection = "General";
+	String GeneralSection = "General Settings";
 	
 	@ConfigSection
 	(
-		name            = "Base",
-		description     = "Options relating to the team's base.",
+		name            = "Sabotage",
+		description     = "Sabotage Options",
 		position        = 1,
-		closedByDefault = false
+		closedByDefault = true
 	)
-	String BaseSection = "Base";
+	String SaboSection = "Sabo";
 	
 	
 	
@@ -41,7 +41,7 @@ extends          net.runelite.client.config.Config
 		name        = "Hightlight Type",
 		description = "The type that is used for hightling objects",
 		position    = 0,
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default HighlightType highlightType()
 	{
@@ -54,7 +54,7 @@ extends          net.runelite.client.config.Config
 		name        = "Outline Width",
 		position    = 1,
 		description = "Number of pixels used when outlining objects.",
-		section     = BaseSection
+		section     = GeneralSection
 	)
 	default int outlineWidth()
 	{
@@ -65,7 +65,7 @@ extends          net.runelite.client.config.Config
 	(
 		keyName     = "FontSize",
 		name        = "Font Size",
-		position    = 0,
+		position    = 2,
 		description = "Used for boiler log count.",
 		section     = GeneralSection
 	)
@@ -79,12 +79,38 @@ extends          net.runelite.client.config.Config
 		keyName     = "FontColour",
 		name        = "Font Colour",
 		description = "Used for the boiler's font.",
-		position    = 1,
+		position    = 3,
 		section     = GeneralSection
 	)
 	default Color fontColour()
 	{
 		return Color.GRAY;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboOutline",
+		name        = "Outline Sabotaged Objects",
+		position    = 4,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displaySaboOutline()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboRepairItems",
+		name        = "Repair Items",
+		position    = 5,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displayRepairItems()
+	{
+		return true;
 	}
 	
 	
