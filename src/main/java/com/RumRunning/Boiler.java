@@ -157,7 +157,10 @@ extends      Overlay
 				Point pos;
 				
 				pos = boiler.game_object.getCanvasTextLocation(graphics, "00/00", 0);
-				pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
+
+				if (pos == null) continue;
+
+                pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
 				
 				graphics.setFont(Utils.FONT);
 				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10",
