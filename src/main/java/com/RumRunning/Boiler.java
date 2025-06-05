@@ -24,6 +24,7 @@ import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
@@ -94,11 +95,11 @@ extends      Overlay
 	       ModelOutlineRenderer modelOutlineRenderer,
 	       Config               config)
 	{
+		setPosition(OverlayPosition.DYNAMIC);
+		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.config               = config;
-		
-		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
 	
 	@Override

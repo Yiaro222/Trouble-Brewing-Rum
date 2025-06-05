@@ -40,6 +40,8 @@ extends      Overlay
 	                                  ModelOutlineRenderer modelOutlineRenderer,
 	                                  Config               config)
 	{
+		setPosition(OverlayPosition.DYNAMIC);
+		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.config               = config;
@@ -98,7 +100,7 @@ extends      Overlay
 				double current_distance = currTime - startTime; //right now
 				double total_distance   = endTime  - startTime; //100%
 				
-				Point piePoint = Perspective.localToCanvas(client, scrapyTrees[i].getLocalLocation(), playerLocation.getPlane(), 135);
+				Point piePoint = Perspective.localToCanvas(client, scrapyTrees[i].getLocalLocation(), playerLocation.getPlane(), 20);
 				
 				ProgressPieComponent ppc = new ProgressPieComponent();
 				ppc.setBorderColor(Color.ORANGE);

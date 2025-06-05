@@ -44,6 +44,8 @@ extends      Overlay
 	                          ModelOutlineRenderer modelOutlineRenderer,
 	                          Config               config)
 	{
+		setPosition(OverlayPosition.DYNAMIC);
+		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.config               = config;
@@ -139,7 +141,7 @@ extends      Overlay
 			//Outline Swarm NPC
 			modelOutlineRenderer.drawOutline(swarmNpc[i], config.outlineWidth(), Color.RED, 1);
 			
-			Point piePoint = Perspective.localToCanvas(client, swarmNpc[i].getLocalLocation(), playerLocation.getPlane(), 135);
+			Point piePoint = Perspective.localToCanvas(client, swarmNpc[i].getLocalLocation(), playerLocation.getPlane(), 60);
 			
 			ProgressPieComponent ppc = new ProgressPieComponent();
 			ppc.setBorderColor(radiusAndPieColour);

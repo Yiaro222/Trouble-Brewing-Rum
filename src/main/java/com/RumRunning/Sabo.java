@@ -30,6 +30,7 @@ import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
@@ -129,13 +130,12 @@ extends      Overlay
 	     ChatMessageManager   chatManager,
 	     Config               config)
 	{
+		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client               = client;
 		this.modelOutlineRenderer = modelOutlineRenderer;
 		this.itemManager          = itemManager;
 		this.chatManager          = chatManager;
 		this.config               = config;
-		
-		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
 	
 	@Override
