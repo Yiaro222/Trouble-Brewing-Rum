@@ -3,11 +3,15 @@ package com.RumRunning;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.gpu.GpuPluginConfig;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
@@ -15,6 +19,8 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 
 
@@ -25,6 +31,7 @@ extends      Overlay
     private final Client               client;
     private final ModelOutlineRenderer modelOutlineRenderer;
     private final ItemManager          itemManager;
+    private final PluginManager        pluginManager;
 
     private final Config config;
 
@@ -55,7 +62,7 @@ extends      Overlay
     public static final WorldArea BLUE_TEAM_LOBBY_SKIP_TILES = new WorldArea(3822, 3010, 1,  10, 0);
     public static final WorldArea NEAR_LOBBY                 = new WorldArea(3800, 3008, 26, 17, 0);
 
-    public static final int DRAW_DISTANCE = 28;
+    public static int DRAW_DISTANCE = 25;
 
     public static BufferedImage ICON_LOGS;
     public static BufferedImage ICON_TINDERBOX;
@@ -73,11 +80,13 @@ extends      Overlay
     Utils(Client               client,
           ModelOutlineRenderer modelOutlineRenderer,
           ItemManager          itemManager,
+          PluginManager        pluginManager,
           Config               config)
     {
         this.client               = client;
         this.modelOutlineRenderer = modelOutlineRenderer;
         this.itemManager          = itemManager;
+        this.pluginManager        = pluginManager;
         this.config               = config;
         
         ICON_LOGS            = itemManager.getImage(ItemID.LOGS);
@@ -185,6 +194,58 @@ extends      Overlay
         drawHighlightedGameObject(graphics, modelOutlineRenderer, config, obj, type, colour);
     }
 
+    private void
+    UpdateDrawDistance()
+    {
+        int drawDistance = 25;
+        
+        for (Plugin plugin: pluginManager.getPlugins())
+        {
+            final var configOfBaseType = pluginManager.getPluginConfigProxy(plugin);
+            
+            if      (pluginManager.isPluginEnabled(plugin) &&
+                     plugin.getName().equals("GPU"))
+            {
+                GpuPluginConfig gpuConfig = (GpuPluginConfig) configOfBaseType;
+                drawDistance = gpuConfig.drawDistance();
+            }
+            else if (pluginManager.isPluginEnabled(plugin) &&
+                     plugin.getName().equals("117 HD"))
+           {
+               /* (Google "Java Reflection" if you struggle to understand what
+                *  is going on here) */
+                try
+                {
+                    final Method method = configOfBaseType.getClass()
+                                                          .getMethod("drawDistance");
+                    final Object value  = method.invoke(configOfBaseType);
+                    
+                    if (value instanceof Integer)
+                    {
+                        drawDistance = (Integer) value;
+                    }
+                }
+                catch (NoSuchMethodException | IllegalAccessException |
+                       InvocationTargetException e) {  }
+            }
+        }
+        
+        if (drawDistance <   0) drawDistance = 0;
+        if (drawDistance > 184) drawDistance = 184;
+        
+        DRAW_DISTANCE = drawDistance;
+    }
+
+    public void
+    gameTick(GameTick gameTick)
+    {
+        /* (I just put this in gameTick because it's not called as frequently
+         *  as other functions and I cannot find a function along the lines of
+         *  "onPluginStateChanged" or whatever.) */
+         UpdateDrawDistance();
+    }
+
+    
     public void
     configChanged(ConfigChanged event)
     {
