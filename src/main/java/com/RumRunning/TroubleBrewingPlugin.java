@@ -38,6 +38,8 @@ extends      Plugin
 	@Inject
 	private HUD    hud;
 	
+	private Cache cache;
+	
 	
 	
 	@Override
@@ -47,6 +49,9 @@ extends      Plugin
 		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
 		overlayManager.add(hud);
+		
+		cache = new Cache();
+		cache.createDirectory();
 	}
 	
 	@Override
@@ -62,8 +67,7 @@ extends      Plugin
 	public void
 	onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		/* Call your class's gameStateChanged here, if it has one */
-		hud.gameStateChanged(gameStateChanged);
+		hud.gameStateChanged(gameStateChanged, cache);
 	}
 	
 	@Subscribe
@@ -71,7 +75,6 @@ extends      Plugin
 	onGameObjectSpawned(GameObjectSpawned event)
 	{
 		/* Call your class's gameObjectSpawned here, if it has one */
-		hud.gameObjectSpawned(event);
 	}
 	
 	@Subscribe
@@ -79,14 +82,6 @@ extends      Plugin
 	onGameObjectDespawned(GameObjectDespawned event)
 	{
 		/* Call your class's gameObjectDespawned here, if it has one */
-		hud.gameObjectDespawned(event);
-	}
-	
-	@Subscribe
-	public void
-	onGameTick(GameTick gameTick)
-	{
-		hud.gameTick();
 	}
 	
 	@Subscribe
@@ -107,23 +102,15 @@ extends      Plugin
 	
 	@Subscribe
 	public void
-	onPlayerSpawned(PlayerSpawned event)
-	{
-		hud.playerSpawned(event);
-	}
-	
-	@Subscribe
-	public void
-	onPlayerDespawned(PlayerDespawned event)
-	{
-		hud.playerDespawned(event);
-	}
-	
-	@Subscribe
-	public void
 	onWidgetLoaded(WidgetLoaded event)
 	{
-		hud.widgetLoaded(event);
+	}
+	
+	@Subscribe
+	public void
+	onGameTick(GameTick gameTick)
+	{
+		hud.gameTick(gameTick, cache);
 	}
 	
 	@Provides
