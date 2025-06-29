@@ -15,6 +15,7 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.PostMenuSort;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -43,19 +44,23 @@ extends      Plugin
 	private PluginManager      pluginManager;
 	
 	@Inject
-	private Config config;
+	private Config                    config;
 	@Inject
-	private Utils  utils;
+	private Utils                     utils;
 	@Inject
-	private Boiler boiler;
+	private Boiler                    boiler;
 	@Inject
-	private MES    mes;
+	private MES                       mes;
 	@Inject
-	private Sabo   sabo;
+	private Sabo                      sabo;
+	@Inject
+	private HUD                       hud;
 	@Inject
 	private TroubleBrewingBarkOverlay barkOverlay;
 	@Inject
 	private TroubleBrewingGrubOverlay grubOverlay;
+	
+	private Cache cache;
 	
 	
 	
@@ -69,8 +74,12 @@ extends      Plugin
 		overlayManager.add(grubOverlay);
 		overlayManager.add(barkOverlay);
 		overlayManager.add(sabo);
+		overlayManager.add(hud);
 		
 		mes = new MES(client, config);
+		
+		cache = new Cache();
+		cache.createDirectory();
 	}
 	
 	@Override
@@ -80,8 +89,9 @@ extends      Plugin
 		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(boiler);
 		overlayManager.remove(barkOverlay);
-		overlayManager.remove(sabo);
 		overlayManager.remove(grubOverlay);
+		overlayManager.remove(sabo);
+		overlayManager.remove(hud);
 		overlayManager.remove(utils);
 	}
 	
@@ -93,6 +103,7 @@ extends      Plugin
 		barkOverlay.gameStateChanged(gameStateChanged);
 		grubOverlay.gameStateChanged(gameStateChanged);
 		sabo.gameStateChanged(gameStateChanged);
+		hud.gameStateChanged(gameStateChanged, cache);
 	}
 	
 	@Subscribe
@@ -107,6 +118,7 @@ extends      Plugin
 	onGameTick(GameTick gameTick)
 	{
 		utils.gameTick(gameTick);
+		hud.gameTick(gameTick, cache);
 	}
 	
 	@Subscribe
@@ -148,6 +160,13 @@ extends      Plugin
 	onConfigChanged(ConfigChanged event)
 	{
 		utils.configChanged(event);
+	}
+	
+	@Subscribe
+	public void
+	onVarbitChanged(VarbitChanged event)
+	{
+		hud.varbitChanged(event);
 	}
 	
 	@Provides
