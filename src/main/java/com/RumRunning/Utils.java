@@ -132,7 +132,8 @@ extends      Overlay
         
         headSlot = client.getLocalPlayer()
                          .getPlayerComposition().getEquipmentId(KitType.HEAD);
-        onRedTeam = headSlot == ItemID.BREW_RED_PIRATE_HAT;
+        onRedTeam = headSlot == ItemID.BREW_RED_PIRATE_HAT ||
+                    headSlot == ItemID.PIRATE_BANDANA_RED;
         
         return onRedTeam;
     }
