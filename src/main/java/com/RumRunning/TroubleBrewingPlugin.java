@@ -60,7 +60,8 @@ extends      Plugin
 	@Inject
 	private TroubleBrewingGrubOverlay grubOverlay;
 	
-	private Cache cache;
+	private Cache    cache;
+	private Headgear headgear;
 	
 	
 	
@@ -80,6 +81,8 @@ extends      Plugin
 		
 		cache = new Cache();
 		cache.createDirectory();
+		
+		headgear = new Headgear(client, config);
 	}
 	
 	@Override
@@ -119,6 +122,7 @@ extends      Plugin
 	{
 		utils.gameTick(gameTick);
 		hud.gameTick(gameTick, cache);
+		headgear.gameTick(gameTick);
 	}
 	
 	@Subscribe

@@ -390,12 +390,38 @@ extends          net.runelite.client.config.Config
 		description = "Timestamps for when the required amount of a resource to " +
 		              "make a rum has been deposited. Only displays if player "   +
 		              "joined at the start of the game.",
-		position    = 8,
-		section     = LobbySection
+		position    = 2,
+		section     = ResourceSection
 	)
 	default boolean displayIngredientTimes()
 	{
 		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "RedTeamHatType",
+		name        = "Red Team Hat Type",
+		description = "Can cause temporary baldness",
+		position    = 5,
+		section     = GeneralSection
+	)
+	default RedTeamHatType redTeamHatType()
+	{
+		return RedTeamHatType.DEFAULT;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "BlueTeamHatType",
+		name        = "Blue Team Hat Type",
+		description = "",
+		position    = 6,
+		section     = GeneralSection
+	)
+	default BlueTeamHatType blueTeamHatType()
+	{
+		return BlueTeamHatType.DEFAULT;
 	}
 	
 	
@@ -410,6 +436,18 @@ extends          net.runelite.client.config.Config
 		HULL_FILLED,
 		CLICKBOX_OUTLINE,
 		CLICKBOX_FILLED
+	}
+	
+	enum RedTeamHatType
+	{
+		DEFAULT,
+		BANDANA
+	}
+	
+	enum BlueTeamHatType
+	{
+		DEFAULT,
+		PIRATE_HAT
 	}
 }
 
