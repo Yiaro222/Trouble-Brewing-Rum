@@ -63,21 +63,17 @@ extends      OverlayPanel
 	
 	private final Config config;
 	
-	/* TODO:
-	 * Known Errors:
-	 * > Remainder clog item costs is SOMETIMES showing a huge or negative number
-	 *   because the cache is appending duplicate values and the value is barrelling
-	 * > When entering the game at the start, it did not reset the timer to 20mins
-	 * >> did i fix this?
-	 * */
+	/* Timer and many of the subclasses below are what I'm dubbing a "struct-styled
+	 * class", similar to a C++ struct. They exist independently of each other
+	 * and are supposed to be simple, and group together functionality for a
+	 * feature or utility. */
 	public class Timer
 	{
 		private int     mins       = -1;
 		private long    secs       = -1;
 		private Instant start_time = null;
 		
-		/*
-		 * This has to be called at least every second. widgetMins is +1 in that
+		/* This has to be called at least every second. widgetMins is +1 in that
 		 * it's 20 (+59secs, I assume) - 1 mins (+0secs). I don't want this. I want
 		 * 19 (+59secs) - 0 (+0secs), so I minus 1 from this value.
 		 * */
@@ -90,7 +86,6 @@ extends      OverlayPanel
 			
 			if (widgetMins < 0)
 			{
-				log.info("Passed in " + (widgetMins + 1) + ", restting");
 				reset();
 				return;
 			}
@@ -102,22 +97,18 @@ extends      OverlayPanel
 				 * values for a few seconds, which means this will likely be set to
 				 * 20(-1) even if there are less than that remaining. */
 				mins = widgetMins;
-				log.info("cached mins: " + mins);
 				return;
 			}
 			/* Jumped over a minute because the initial value was wrong, as explained
 			 * in the previous comment */
 			else if (mins == 19 && widgetMins < 18)
 			{
-				log.info("adjusting timer from " + mins + " mins to " + widgetMins);
 				mins       = widgetMins;
 				start_time = null;
 			}
 			
 			if (start_time == null && widgetMins < mins)
 			{
-				log.info("starting timer via update - mins: " + mins +
-				         ", widgetMins: " + widgetMins);
 				mins       = widgetMins;
 				start_time = Instant.now();
 			}
@@ -167,13 +158,10 @@ extends      OverlayPanel
 			}
 		}
 		
-		/*
-		 * Reset and don't run
-		 * */
+		/* Reset and don't run */
 		public void reset() { reset(false, 0); }
 		
-		/*
-		 * Resets with options to run
+		/* Resets with options to run
 		 * 
 		 * run - Determines whether the timer will run after resetting. Set to true
 		 *       if you know the starting seconds will be aligned with the in game
@@ -190,17 +178,20 @@ extends      OverlayPanel
 			secs       = -1;
 			start_time = null;
 			
-			log.info("reset timer");
 			if (run)
 			{
 				mins = startingMins - 1;
-				log.info("Starting timer from: " + mins + "(" + startingMins + " passed in)");
 				start_time = Instant.now();
 			}
 		}
+		
 	}
 	private Timer timer = new Timer();
 	
+	/* Struct-styled class
+	 * This contains information about item rewards and stores which the player
+	 * has already obtained (loaded in from, and written to, the cache elsewhere)
+	 * */
 	public static class Rewards
 	{
 		public enum Shop
@@ -249,6 +240,7 @@ extends      OverlayPanel
 				{
 					if (values()[i].item_id == id) return(values()[i]);
 				}
+				
 				return(null);
 			}
 			
@@ -287,11 +279,14 @@ extends      OverlayPanel
 	}
 	public static Rewards rewards = new Rewards();
 	
+	/* Struct-styled class
+	 * This stores data which is needed across draws/ticks */
 	public class CacheData
 	{
 		public GameState prev_gamestate;
 		public boolean   awaiting_scene_load = false;
 		public boolean   clog_read           = false;
+		public boolean   clog_menu_open      = false;
 	}
 	private CacheData cacheData = new CacheData();
 	
@@ -426,10 +421,16 @@ extends      OverlayPanel
 		
 	}
 	
+	/* Struct-styled class
+	 * Reads and stores the relevant varbits. eight_count is called upon logging
+	 * in, as well as at the end of the game. The others are called within the
+	 * minigame */
 	public static class VarbitValues
 	{
+		/* This consists of the relevant TB varbits */
 		enum TroubleBrewingVarbit
 		{
+			/* _DAN_ = red team, _SAN_ = blue team */
 			BREW_DAN_BOTTLE_1   (VarbitID.BREW_DAN_BOTTLE_1,    "BREW_DAN_BOTTLE_1",    false),
 			BREW_SAN_BOTTLE_1   (VarbitID.BREW_SAN_BOTTLE_1,    "BREW_SAN_BOTTLE_1",    false),
 			BREW_DAN_PLAYER_LOAD(VarbitID.BREW_DAN_PLAYER_LOAD, "BREW_DAN_PLAYER_LOAD", false),
@@ -438,9 +439,6 @@ extends      OverlayPanel
 			BREW_PLAYER_REWARD  (VarbitID.BREW_PLAYER_REWARD,   "BREW_PLAYER_REWARD",   false),
 			BREW_PLAYER_MIDPOINT(VarbitID.BREW_PLAYER_MIDPOINT, "BREW_PLAYER_MIDPOINT", false),
 		
-			/* wtf is a multi bottler? */
-			BREW_DAN_MULTI_BOTTLER(VarbitID.BREW_DAN_MULTI_BOTTLER, "BREW_DAN_MULTI_BOTTLER", false),
-			BREW_SAN_MULTI_BOTTLER(VarbitID.BREW_SAN_MULTI_BOTTLER, "BREW_SAN_MULTI_BOTTLER", false),
 			BREW_LOADS_AVAILABLE  (VarbitID.BREW_LOADS_AVAILABLE,   "BREW_LOADS_AVAILABLE",   false),
 		
 			BREW_PIECES(VarPlayerID.BREW_PIECES, "BREW_PIECES", true);
@@ -457,25 +455,30 @@ extends      OverlayPanel
 			}
 		}
 		
-		public boolean rum_varbit_triggered = false;
+		public boolean rum_varbit_triggered   = false;
+		public boolean eight_varbit_triggered = false;
 		
 		/* points          - "contrib",
 		 * player_loads    - I believe this determines if the player can see the rum
-		 * loads_available - idk but i think this is to do with activity, if its 0
-		 *                   you don't see any other varbits 
+		 * loads_available - this is to do with activity, if its 0 you don't see
+		 *                   any other varbits 
+		 * eight_count     - the reward points/currency
 		 * */
 		public int points          = 0;
 		public int player_loads    = 0;
 		public int loads_available = 0;
+		public int eight_count     = 0;
 		
 		public void
 		reset()
 		{
-			rum_varbit_triggered = false;
+			rum_varbit_triggered   = false;
+			eight_varbit_triggered = false;
 			
 			points          = 0;
 			player_loads    = 0;
 			loads_available = 0;
+			eight_count     = 0;
 		}
 		
 		public void
@@ -499,11 +502,10 @@ extends      OverlayPanel
 			
 			if (tbVar == null) return;
 			
-			log.info("Var] " + tbVar.name + ": " + Integer.toString(value));
-			
 			if (tbVar == TroubleBrewingVarbit.BREW_PIECES)
 			{
-				rewards.eight_amount = value;
+				eight_count            = value;
+				eight_varbit_triggered = true;
 			}
 			else if (tbVar == TroubleBrewingVarbit.BREW_PLAYER_REWARD)
 			{
@@ -532,6 +534,16 @@ extends      OverlayPanel
 	}
 	public static VarbitValues varbits = new VarbitValues();
 	
+	/* Struct-styled class
+	 * Reads and stores the values read from the default UI widgets.
+	 * The two subsubclasses follow the same structure. The status variable is for
+	 * checking whether the player is within the lobby or within the game. It's
+	 * set with validate(), and reset is for resetting the state when entering and
+	 * inbetween games and such.
+	 * The prev_ and curr_ states are for detecting and grabbing changes in the
+	 * stored values.
+	 * The subsubclass values are then written to in DefaultWidgetValue itself.
+	 * */
 	public class DefaultWidgetValue
 	{
 		public class LobbyWidgetData
@@ -539,23 +551,25 @@ extends      OverlayPanel
 			public boolean status;
 			
 			public boolean midpoint;
+			public boolean waiting_for_more_players;
 			public int     next_game_timer;
 			
 			public void
 			reset()
 			{
-				status          = false;
-				midpoint        = false;
-				next_game_timer = -1;
+				status                   = false;
+				midpoint                 = false;
+				waiting_for_more_players = false;
+				next_game_timer          = -1;
 			}
 			
 			public void
 			validate()
 			{
-				status = true;
-				if (next_game_timer == -1)
+				status = false;
+				if (next_game_timer > -1 || waiting_for_more_players)
 				{
-					status = false;
+					status = true;
 				}
 			}
 			
@@ -623,27 +637,36 @@ extends      OverlayPanel
 			int    duration;
 			
 			contents = GetWidgetContent(InterfaceID.BrewWaitingRoomOverlay.TIME_TEXT);
-			int tmp = mins     = GetExtractedValue(contents);
-			if (contents == null || mins == -1) return;
+			
+			lobby_state.waiting_for_more_players = contents.contains("Waiting for");
+			
+			if (contents == null || (mins = GetExtractedValue(contents)) == -1)
+			{
+				lobby_state.validate();
+				lobby_state.next_game_timer = -1;
+				return;
+			}
+			
+			/* I feel like the logic here is wrong, but it's consistently wrong, so
+			 * it works? :D */
 			
 			if ((lobby_state.midpoint = contents.contains("Midpoint")))
 			{
-				duration = 10 - mins;
+				duration = 10 + 1 - mins;
 			}
 			else
 			{
 				/* To fix the 6->3mins time jump */
 				if (mins < 6)
 				{
-					mins += 3;
+					mins += 2;
 				}
 				
 				duration = 15 + 1 - mins + 10;
 			}
 			
-			lobby_state.next_game_timer = 23 - duration - 1;
+			lobby_state.next_game_timer = 23 - duration;
 			lobby_state.validate();
-			// log.info("Default widget: " + tmp + " | mins (adjusted default): " + mins + " | duration: " + duration + " | next_game_timer: " + lobby_state.next_game_timer);
 		}
 		
 		public void
@@ -726,7 +749,6 @@ extends      OverlayPanel
 				numerals = matcher.group();
 				if (!numerals.chars().allMatch(Character::isDigit))
 				{
-					log.info("string does not contain only digits: " + numerals);
 					return(result);
 				}
 				
@@ -739,6 +761,14 @@ extends      OverlayPanel
 	}
 	private DefaultWidgetValue defaultWidgetValues = new DefaultWidgetValue();
 	
+	/* Struct-styled class
+	 * This does a few different similar things.
+	 * > It tracks how long a rum has been brewing for
+	 * Then for the following, it only tracks if the player joined at the beginning
+	 * of the game.
+	 * > When the game started
+	 * > The timestamps are for when each resource was first depoed.
+	 * */
 	public class MinigameTimers
 	{
 		Instant rum        = null;
@@ -764,9 +794,21 @@ extends      OverlayPanel
 			water_bucket_timestamp   = "";
 			boiler_timestamp         = "";
 		}
+		
+		public String
+		get()
+		{
+			if (game_start == null) return("-1");
+			
+			final Instant now  = Instant.now();
+			final int     secs = (int) Duration.between(game_start, now).toSeconds();
+			
+			return(secs + "s");
+		}
 	}
 	private MinigameTimers timers = new MinigameTimers();
 	
+	/* Stores icons displayed on the UI */
 	private Map<Integer, ImageComponent> icons = new HashMap<>();
 	
 	
@@ -808,7 +850,9 @@ extends      OverlayPanel
 		if (Utils.inMinigame(client))
 		{
 			DefaultWidgetValue.LobbyWidgetData LS;
-			boolean                            ORT = Utils.onRedTeam;
+			/* (Can't use Utils.onRedTeam bcus that var is updated after this
+			 * function or next tick) */
+			boolean                            ORT = Utils.onRedTeam(client);
 			
 			defaultWidgetValues.updateIngameData();
 			LS = defaultWidgetValues.lobby_state;
@@ -816,45 +860,53 @@ extends      OverlayPanel
 			/* Just joined the game */
 			if (LS.status)
 			{
-				defaultWidgetValues.lobby_state.reset();
-				
-				log.info("JUST ENTERED GAME");
 				/* So blue team can only join at two points, the start of the game and
 				 * at the mid point. So these timers are set. Red team's timer is only
 				 * known/set at the start of them game. Joining late will require the
 				 * widget's timer to tickdown before the timer can be started properly.
 				 * */
+				/* Joined at midpoint on blue side */
 				if (!ORT && LS.midpoint)
 				{
-					log.info("JOINED ON BLUE SIDE AT MIDPOINT");
 					timer.reset(true, 10);
 				}
-				else if (!ORT && !LS.midpoint)
+				/* TB has a slight bug where you don't always get put into the game
+				 * on the same tick that the timer ends - sometimes it will reset to
+				 * "10 minutes until midpoint" (or whatever) before putting the player
+				 * into the game the following tick. The next_game_timer == 22 case
+				 * is to deal with this. */
+				/* Joined at the start on blue side */
+				else if (!ORT && (!LS.midpoint || LS.waiting_for_more_players) ||
+				         (LS.next_game_timer == 22))
 				{
-					log.info("JOINED ON BLUE SIDE AT START OF GAME");
 					timer.reset(true, 20);
 					timers.game_start = Instant.now();
 				}
-				else if (ORT && LS.next_game_timer == 0)
+				/* The second line is to address the same bug as mentioned in the
+				 * previous comment. I'm not certain it fixes it because it's so hard
+				 * to replicate the issue, so testing is an issue */
+				/* Join at the start on red side */
+				else if (ORT && (LS.next_game_timer < 1 || LS.waiting_for_more_players ||
+				         (timer.running() && timer.mins == 0)))
 				{
-					log.info("JOINED ON RED SIDE AT START OF GAME");
 					timer.reset(true, 20);
 					timers.game_start = Instant.now();
 				}
 				/* This is called if the player joins late on red side */
 				else
 				{
-					log.info("JOINED ON RED SIDE MID GAME");
-					log.info("LS.NEXT_GAME_TIMER = " + LS.next_game_timer +
-					         "| TIMER.MINS = " + timer.mins);
 					timer.mins -= 3;
 				}
+				
+				defaultWidgetValues.lobby_state.reset();
 			}
 			else
 			{
-				timer.update(defaultWidgetValues.curr_ingame_state.mins_timer);
+				timer.update(defaultWidgetValues.curr_ingame_state.mins_timer + 1);
 			}
 			
+			/* If the player was present at the start of the game then update the
+			 * first-resource depo times */
 			if (timers.game_start != null && config.displayIngredientTimes())
 			{
 				CheckFirstResources();
@@ -867,26 +919,25 @@ extends      OverlayPanel
 			/* Game just finished */
 			if (defaultWidgetValues.curr_ingame_state.status)
 			{
-				log.info("L875 - RESETTING WHOLE STATE");
-				defaultWidgetValues.updatePrevious();
 				defaultWidgetValues.curr_ingame_state.reset();
+				defaultWidgetValues.prev_ingame_state.reset();
 				defaultWidgetValues.lobby_state.reset();
 				timers.reset();
 				timer.reset();
 			}
 			
-			if (Utils.BLUE_TEAM_LOBBY.contains(playerPos) ||
-		      Utils.RED_TEAM_LOBBY .contains(playerPos))
+			/* Update lobby state and timer */
+			if (Utils.LOBBY.contains(playerPos))
 		  {
-				final DefaultWidgetValue.LobbyWidgetData LS = defaultWidgetValues.lobby_state;
+				final DefaultWidgetValue.LobbyWidgetData LS;
 				
 				defaultWidgetValues.updateLobbyData();
+				LS = defaultWidgetValues.lobby_state;
 				
+				/* Check if game started while player was on skip tiles & reset timer */
 				if (Utils.BLUE_TEAM_LOBBY_SKIP_TILES.contains(playerPos) &&
-				    LS.next_game_timer == 0 &&
-				    defaultWidgetValues.lobby_state.next_game_timer == 22)
+				    timer.mins == 0 && LS.next_game_timer == 22)
 				{
-					log.info("DID NOT JOIN THE GAME BCUS PLAYER WAS ON SKIP TILES");
 					timer.reset(true, 23);
 				}
 				
@@ -897,11 +948,8 @@ extends      OverlayPanel
 			 * lobby again, the timer will think that it *just* decreased and will
 			 * start the seconds timer. To prevent this, this resets the timer if the
 			 * secs timer wasn't started. */
-			else if (timer.mins > 0 && !timer.running()          &&
-			         (Utils.BLUE_TEAM_LOBBY.contains(playerPos) ||
-			          Utils.RED_TEAM_LOBBY .contains(playerPos)) == false)
+			else if (timer.mins > 0 && !timer.running() && !Utils.LOBBY.contains(playerPos))
 			{
-				log.info("LEFT LOBBY - RESETTING TIMER");
 				timer.reset();
 			}
 		  else if (timer.running())
@@ -915,7 +963,6 @@ extends      OverlayPanel
 		/* Not in minigame or in/near the lobby */
 		else
 		{
-			log.info("L920 - RESETTING WHOLE STATE");
 			defaultWidgetValues.updatePrevious();
 			defaultWidgetValues.curr_ingame_state.reset();
 			defaultWidgetValues.lobby_state.reset();
@@ -931,21 +978,19 @@ extends      OverlayPanel
 	{
 		final var currGameState = gameStateChanged.getGameState();
 		
+		/* Player logged-in */
 		if (cacheData.prev_gamestate == GameState.LOGGING_IN &&
 		    currGameState            == GameState.LOGGED_IN)
 		{
-			log.info("Player logged-in");
 			/* So the scene isn't loaded until a few ticks after logging in, so I
 			 * need to read in the data from the cache after that happens. */
 			cacheData.awaiting_scene_load = true;
 		}
+		/* Player logged-out - write to the cache if needed */
 		else if ((cacheData.prev_gamestate == GameState.LOGGED_IN        ||
 		          cacheData.prev_gamestate == GameState.CONNECTION_LOST) &&
 		          currGameState            == GameState.LOGIN_SCREEN)
 		{
-			log.info("Player logged out");
-			
-			log.info("L950 - RESETTING WHOLE STATE");
 			defaultWidgetValues.updatePrevious();
 			defaultWidgetValues.curr_ingame_state.reset();
 			defaultWidgetValues.lobby_state.reset();
@@ -953,9 +998,13 @@ extends      OverlayPanel
 			timer.reset();
 			
 			o_cache.data.eight_count = rewards.eight_amount;
-			for (int i = 0; i < rewards.clogs.size(); ++i)
+			if (cacheData.clog_read)
 			{
-				o_cache.data.collection_log_ids.add(rewards.clogs.get(i).item_id);
+				o_cache.data.collection_log_ids.clear();
+				for (int i = 0; i < rewards.clogs.size(); ++i)
+				{
+					o_cache.data.collection_log_ids.add(rewards.clogs.get(i).item_id);
+				}
 			}
 			
 			o_cache.write(client.getLocalPlayer().getName());
@@ -978,6 +1027,12 @@ extends      OverlayPanel
 	varbitChanged(VarbitChanged event)
 	{
 		varbits.varbitChanged(event);
+		
+		if (varbits.eight_varbit_triggered)
+		{
+			rewards.eight_amount           = varbits.eight_count;
+			varbits.eight_varbit_triggered = false;
+		}
 	}
 	
 	
@@ -992,7 +1047,7 @@ extends      OverlayPanel
 		Color          colour    = Color.WHITE;
 		float          totalSecs = 0.0f;
 		
-		final boolean active    = varbits.loads_available > 0 ? true : false;
+		final boolean active = varbits.loads_available > 0 ? true : false;
 		
 		totalSecs = timer.mins * 60 + (int) timer.secs;
 		if (active && timers.rum != null)
@@ -1006,7 +1061,7 @@ extends      OverlayPanel
 		}
 		
 		/* rum duration, remaining rum */
-		final float RD = 45.0f;
+		final float RD = 40.0f;
 		final int   RR = (int) Math.floor(totalSecs / RD);
 		
 		if (!Utils.inMinigame(client)) return(null);
@@ -1021,7 +1076,7 @@ extends      OverlayPanel
 		panelComponent.getChildren().add(LineComponent.builder().left("").build());
 		
 		rumCount = defaultWidgetValues.curr_ingame_state.score_blue;
-		if (Utils.onRedTeam)
+		if (Utils.onRedTeam(client))
 		{
 			rumCount = defaultWidgetValues.curr_ingame_state.score_red;
 		}
@@ -1065,7 +1120,7 @@ extends      OverlayPanel
 			bar = new ProgressBarComponent();
 			bar.setLabelDisplayMode(ProgressBarComponent.LabelDisplayMode.FULL);
 			bar.setMinimum(0);
-			bar.setMaximum(45);
+			bar.setMaximum(40);
 			bar.setValue((int) seconds);
 			panelComponent.getChildren().add(bar);
 		}
@@ -1075,11 +1130,12 @@ extends      OverlayPanel
 		colour = Color.WHITE;
 		if (defaultWidgetValues.curr_ingame_state.bitternut >= RR) colour = Color.GREEN;
 		icon = GetIcon(ItemID.BREW_BITTERNUT, "");
-		msg  = defaultWidgetValues.curr_ingame_state.bitternut + "   ";
+		msg  = "";
 		if (config.displayIngredientTimes() && !timers.bitternut_timestamp.isEmpty())
 		{
-			msg += "(" + timers.bitternut_timestamp + ")";
+			msg += "(" + timers.bitternut_timestamp + ") ";
 		}
+		msg += defaultWidgetValues.curr_ingame_state.bitternut;
 		panelComponent.getChildren().add(SplitComponent.builder()
 		              .orientation(ComponentOrientation.HORIZONTAL)
 		              .first(icon)
@@ -1089,11 +1145,12 @@ extends      OverlayPanel
 		colour = Color.WHITE;
 		if (defaultWidgetValues.curr_ingame_state.sweetgrub >= RR) colour = Color.GREEN;
 		icon = GetIcon(ItemID.BREW_SWEETGRUBS, "");
-		msg  = defaultWidgetValues.curr_ingame_state.sweetgrub + "   ";
+		msg  = "";
 		if (config.displayIngredientTimes() && !timers.sweetgrub_timestamp.isEmpty())
 		{
-			msg += "(" + timers.sweetgrub_timestamp + ")";
+			msg += "(" + timers.sweetgrub_timestamp + ") ";
 		}
+		msg += defaultWidgetValues.curr_ingame_state.sweetgrub;
 		panelComponent.getChildren().add(SplitComponent.builder()
 		              .orientation(ComponentOrientation.HORIZONTAL)
 		              .first(icon)
@@ -1102,13 +1159,14 @@ extends      OverlayPanel
 		
 		colour = Color.WHITE;
 		if (defaultWidgetValues.curr_ingame_state.coloured_water / 3 >= RR) colour = Color.GREEN;
-		if (Utils.onRedTeam) icon = GetIcon(ItemID.BREW_BOWL_RED, "");
-		else                 icon = GetIcon(ItemID.BREW_BOWL_BLUE, "");
-		msg = defaultWidgetValues.curr_ingame_state.coloured_water + "   ";
+		if (Utils.onRedTeam(client)) icon = GetIcon(ItemID.BREW_BOWL_RED, "");
+		else                         icon = GetIcon(ItemID.BREW_BOWL_BLUE, "");
+		msg = "";
 		if (config.displayIngredientTimes() && !timers.coloured_water_timestamp.isEmpty())
 		{
-			msg += "(" + timers.coloured_water_timestamp + ")";
+			msg += "(" + timers.coloured_water_timestamp + ") ";
 		}
+		msg += defaultWidgetValues.curr_ingame_state.coloured_water;
 		panelComponent.getChildren().add(SplitComponent.builder()
 		              .orientation(ComponentOrientation.HORIZONTAL)
 		              .first(icon)
@@ -1118,11 +1176,12 @@ extends      OverlayPanel
 		colour = Color.WHITE;
 		if (defaultWidgetValues.curr_ingame_state.scrapey_bark >= RR) colour = Color.GREEN;
 		icon = GetIcon(ItemID.BREW_SCRAPEY_BARK, "");
-		msg  = defaultWidgetValues.curr_ingame_state.scrapey_bark + "   ";
+		msg  = "";
 		if (config.displayIngredientTimes() && !timers.scrapey_bark_timestamp.isEmpty())
 		{
-			msg += "(" + timers.scrapey_bark_timestamp + ")";
+			msg += "(" + timers.scrapey_bark_timestamp + ") ";
 		}
+		msg += defaultWidgetValues.curr_ingame_state.scrapey_bark;
 		panelComponent.getChildren().add(SplitComponent.builder()
 		              .orientation(ComponentOrientation.HORIZONTAL)
 		              .first(icon)
@@ -1132,15 +1191,16 @@ extends      OverlayPanel
 		colour = Color.WHITE;
 		if (defaultWidgetValues.curr_ingame_state.water_bucket / 5 >= RR) colour = Color.GREEN;
 		icon = GetIcon(ItemID.BUCKET_WATER, "");
-		msg  = defaultWidgetValues.curr_ingame_state.water_bucket + "   ";
+		msg  = "";
 		if (config.displayIngredientTimes() && !timers.water_bucket_timestamp.isEmpty())
 		{
-			msg += "(" + timers.water_bucket_timestamp + ")";
+			msg += "(" + timers.water_bucket_timestamp + ") ";
 		}
+		msg += defaultWidgetValues.curr_ingame_state.water_bucket;
 		panelComponent.getChildren().add(SplitComponent.builder()
 		              .orientation(ComponentOrientation.HORIZONTAL)
 		              .first(icon)
-		              .second(LineComponent.builder().right(msg).build())
+		              .second(LineComponent.builder().right(msg).rightColor(colour).build())
 		              .build());
 		
 		
@@ -1154,11 +1214,12 @@ extends      OverlayPanel
 			panelComponent.getChildren().add(LineComponent.builder().left("").build());
 			
 			icon = GetIcon(0, "boiler.png");
-			msg  = logCount + "   ";
+			msg  = "";
 			if (!timers.boiler_timestamp.isEmpty())
 			{
-				msg += "(" + timers.boiler_timestamp + ")";
+				msg += "(" + timers.boiler_timestamp + ") ";
 			}
+			msg += logCount;
 			panelComponent.getChildren().add(SplitComponent.builder()
 			              .orientation(ComponentOrientation.HORIZONTAL)
 			              .first(icon)
@@ -1235,11 +1296,6 @@ extends      OverlayPanel
 			if (widget != null) widget.revalidate();
 			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_RIGHT)) != null) widget.setHidden(!config.hideContentRight());
 			if (widget != null) widget.revalidate();
-			
-			if ((widget = client.getWidget(InterfaceID.BrewOverlay.STARTING_SYMBOLS___STILL_KIT)) == null)
-			{
-				log.info("the starting kit thing appeared");
-			}
 		}
 		
 		return(super.render(graphics));
@@ -1316,32 +1372,32 @@ extends      OverlayPanel
 		
 		if (timers.bitternut_timestamp.isEmpty() && (brewStarted || CS.bitternut > 0))
 		{
-			timers.bitternut_timestamp = timer.get();
+			timers.bitternut_timestamp = timers.get();
 		}
 		
 		if (timers.sweetgrub_timestamp.isEmpty() && (brewStarted || CS.sweetgrub > 0))
 		{
-			timers.sweetgrub_timestamp = timer.get();
+			timers.sweetgrub_timestamp = timers.get();
 		}
 		
 		if (timers.coloured_water_timestamp.isEmpty() && (brewStarted || CS.coloured_water >= 3))
 		{
-			timers.coloured_water_timestamp = timer.get();
+			timers.coloured_water_timestamp = timers.get();
 		}
 		
 		if (timers.scrapey_bark_timestamp.isEmpty() && (brewStarted || CS.scrapey_bark > 0))
 		{
-			timers.scrapey_bark_timestamp = timer.get();
+			timers.scrapey_bark_timestamp = timers.get();
 		}
 		
 		if (timers.water_bucket_timestamp.isEmpty() && (brewStarted || CS.water_bucket >= 5))
 		{
-			timers.water_bucket_timestamp = timer.get();
+			timers.water_bucket_timestamp = timers.get();
 		}
 		
 		if (timers.boiler_timestamp.isEmpty() && (brewStarted || logCount >= 3))
 		{
-			timers.boiler_timestamp = timer.get();
+			timers.boiler_timestamp = timers.get();
 		}
 	}
 	
@@ -1396,7 +1452,6 @@ extends      OverlayPanel
 			final Player player = client.getLocalPlayer();
 			if (player == null || player.getName() == null) return;
 			
-			log.info("Getting player info for " + player.getName());
 			i_cache.read(player.getName());
 			
 			if (rewards.eight_amount == 0)
@@ -1425,7 +1480,7 @@ extends      OverlayPanel
 		if ((tbClogWidget =
 		     client.getWidget(InterfaceID.Collection.ITEMS_CONTENTS)) == null)
 		{
-			cacheData.clog_read = false;
+			cacheData.clog_menu_open = false;
 			return;
 		}
 		
@@ -1437,13 +1492,9 @@ extends      OverlayPanel
 		/* Not on tb tab */
 		if (!Rewards.Shop.containsID(itemWidgets[0].getItemId()))// return;
 		{
-			log.info("Not on TB collection log");
 			return;
 		}
 		
-		if (cacheData.clog_read == true) return;
-		
-		log.info("On TB collection log");
 		rewards.clogs.clear();
 		
 		/* Populate list of item IDs that the player already has */
@@ -1462,8 +1513,9 @@ extends      OverlayPanel
 		
 		client.addChatMessage(ChatMessageType.GAMEMESSAGE,
 		                      "TroubleBrewingRum Plugin",
-		                      "Trouble Brewing Clog Loaded", "");
-		cacheData.clog_read = true;
+		                      "Trouble Brewing Rum: Collection Log read", "");
+		cacheData.clog_read      = true;
+		cacheData.clog_menu_open = true;
 	}
 	
 }

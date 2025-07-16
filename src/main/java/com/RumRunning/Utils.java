@@ -60,7 +60,8 @@ extends      Overlay
     public static final WorldArea RED_TEAM_LOBBY             = new WorldArea(3803, 3010, 10, 10, 0);
     public static final WorldArea BLUE_TEAM_LOBBY            = new WorldArea(3813, 3010, 10, 10, 0);
     public static final WorldArea BLUE_TEAM_LOBBY_SKIP_TILES = new WorldArea(3822, 3010, 1,  10, 0);
-    public static final WorldArea NEAR_LOBBY                 = new WorldArea(3800, 3008, 26, 17, 0);
+    public static final WorldArea NEAR_LOBBY                 = new WorldArea(3800, 3008, 28, 17, 0);
+    public static final WorldArea LOBBY                      = new WorldArea(3803, 3010, 20, 10, 0);
 
     public static int DRAW_DISTANCE = 25;
 
