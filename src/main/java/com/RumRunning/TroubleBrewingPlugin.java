@@ -12,6 +12,7 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.PostMenuSort;
@@ -114,6 +115,13 @@ extends      Plugin
 	onPostMenuSort(PostMenuSort postMenuSort)
 	{
 		mes.postMenuSort(postMenuSort);
+	}
+	
+	@Subscribe
+	public void
+	onMenuEntryAdded(MenuEntryAdded event)
+	{
+		mes.menuEntryAdded(event);
 	}
 	
 	@Subscribe

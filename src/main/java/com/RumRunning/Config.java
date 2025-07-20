@@ -424,6 +424,84 @@ extends          net.runelite.client.config.Config
 		return BlueTeamHatType.DEFAULT;
 	}
 	
+	@ConfigItem
+	(
+		keyName     = "SwapJoinCrewOptions",
+		name        = "Swap Join Options",
+		description = "Swaps San Fan and Fancy Dan's left click option to Join-Crew, and swaps the door option while outside the lobby.",
+		position    = 1,
+		section     = MESSection
+	)
+	default boolean swapJoinTeam()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "HonestJimmyType",
+		name        = "Honest Jimmy",
+		description = "",
+		position    = 2,
+		section     = MESSection
+	)
+	default HonestJimmyType jimmyType()
+	{
+		return HonestJimmyType.DEFAULT;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "SwapBucketAmount",
+		name        = "Bucket Take 5",
+		description = "Swaps the Tool Table's withdrawal amount to 5 for Buckets",
+		position    = 3,
+		section     = MESSection
+	)
+	default boolean swapBucketAmount()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "SwapBowlAmount",
+		name        = "Bowl Take 5",
+		description = "Swaps the Tool Table's withdrawal amount to 5 for Bowl",
+		position    = 4,
+		section     = MESSection
+	)
+	default boolean swapBowlAmount()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "SwapMeatAmount",
+		name        = "Meat Take 5",
+		description = "Swaps the Tool Table's withdrawal amount to 5 for Meat",
+		position    = 5,
+		section     = MESSection
+	)
+	default boolean swapMeatAmount()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DontUseOnPlayer",
+		name        = "Use-On-Player Prevention",
+		description = "Prevent certain items from being used on players",
+		position    = 6,
+		section     = MESSection
+	)
+	default boolean dontUseOnPlayer()
+	{
+		return true;
+	}
+	
 	
 	
 	//############################   Enums          ############################
@@ -448,6 +526,13 @@ extends          net.runelite.client.config.Config
 	{
 		DEFAULT,
 		PIRATE_HAT
+	}
+	
+	enum HonestJimmyType
+	{
+		DEFAULT,
+		TRADE,
+		JOIN
 	}
 }
 
