@@ -82,7 +82,7 @@ extends      Overlay
 				                                config,
 				                                grubMounds[i],
 				                                config.highlightType(),
-				                                Color.GREEN);
+				                                config.sweetgrubMoundActiveColour());
 			}
 			else if (grubMounds[i].getId() == ObjectID.BREW_SWEETGRUB_MOUND_DEPELETED)
 			{
@@ -91,7 +91,7 @@ extends      Overlay
 				                                config,
 				                                grubMounds[i],
 				                                config.highlightType(),
-				                                Color.RED);
+				                                config.sweetgrubMoundInactiveColour());
 			}
 		}
 		

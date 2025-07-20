@@ -30,6 +30,11 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 
 
+/* The log count is read from the default UI which is updated every 1-2 secs,
+ * and because of this, the displayed log count and colours feel sluggish.
+ * To fix this I could use the varbit values which are instantly produced but
+ * I think I'm going to leave it as-is for now. */
+
 public class Boiler
 extends      Overlay
 {
@@ -157,10 +162,10 @@ extends      Overlay
 				Point pos;
 				
 				pos = boiler.game_object.getCanvasTextLocation(graphics, "00/00", 0);
-
+				
 				if (pos == null) continue;
-
-                pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
+				
+				pos = new Point(pos.getX() + config.fontSize() / 2, pos.getY());
 				
 				graphics.setFont(Utils.FONT);
 				OverlayUtil.renderTextLocation(graphics, pos, logCount + "/10",

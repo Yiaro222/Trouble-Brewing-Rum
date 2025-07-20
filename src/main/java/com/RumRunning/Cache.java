@@ -11,7 +11,6 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 
 
@@ -21,7 +20,6 @@ import net.runelite.client.RuneLite;
  * (however small) performance cost to re-creating io buffers each function-call
  * is worth it. */
 
-@Slf4j
 public class Cache
 {
 	private Gson gsonHandle = null;
@@ -40,7 +38,6 @@ public class Cache
 	{
 		if (username == null || username.isEmpty())
 		{
-			log.debug("Invalid username");
 			return;
 		}
 		
@@ -52,12 +49,8 @@ public class Cache
 		try (FileWriter outputStream = new FileWriter(directory + username))
 		{
 			gsonHandle.toJson(data, outputStream);
-			log.debug("Wrote to file");
 		}
-		catch (IOException e)
-		{
-			log.debug("Could not create output file at " + directory + username, e);
-		}
+		catch (IOException e) {  }
 	}
 	
 	public void
@@ -65,7 +58,6 @@ public class Cache
 	{
 		if (username == null || username.isEmpty())
 		{
-			log.debug("Invalid username");
 			return;
 		}
 		
@@ -77,12 +69,8 @@ public class Cache
 		try (FileReader inputStream = new FileReader(directory + username))
 		{
 			data = gsonHandle.fromJson(inputStream, Data.class);
-			log.debug("Read cache");
 		}
-		catch (IOException e)
-		{
-			log.debug("Could not create output file at " + directory + username, e);
-		}
+		catch (IOException e) {  }
 	}
 	
 	public void

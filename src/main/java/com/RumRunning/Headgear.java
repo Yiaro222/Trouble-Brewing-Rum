@@ -1,6 +1,7 @@
 
 package com.RumRunning;
 
+import ch.qos.logback.core.joran.spi.ConsoleTarget;
 import net.runelite.api.Client;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.events.GameTick;
@@ -22,6 +23,7 @@ import net.runelite.api.kit.KitType;
  * it isn't as simple as that either. Because it seems like a character's normal
  * hairstyle is different than the id when wearing a hat. So seemingly it would
  * be a huge amount of work to get hairstyles working */
+
 class Headgear
 {
 	private final Client client;
@@ -44,12 +46,20 @@ class Headgear
 	private final int hatBaldF = 301;
 	private final int baldF    = 45;
 	
+	/* This is so the player can retain their hair if the headgear is set on the
+	 * default option and left unchanged */
+	private boolean redSideDefaultUnchanged = false;
 	
 	
 	Headgear(Client client, Config config)
 	{
 		this.client = client;
 		this.config = config;
+		
+		if (config.redTeamHatType() == Config.RedTeamHatType.DEFAULT)
+		{
+			redSideDefaultUnchanged = true;
+		}
 	}
 	
 	public void
@@ -66,6 +76,8 @@ class Headgear
 			{
 				if (config.redTeamHatType() == Config.RedTeamHatType.DEFAULT)
 				{
+					if (redSideDefaultUnchanged) return;
+					
 					kit[headID] = rHatID + offset;
 					kit[hairID] = male ? hatBaldM : hatBaldF;
 				}
@@ -73,6 +85,8 @@ class Headgear
 				{
 					kit[headID] = rBanID + offset;
 					kit[hairID] = male ? baldM : baldF;
+					
+					redSideDefaultUnchanged = false;
 				}
 			}
 			else if (hOffsetID == bBanID || hOffsetID == pHatID)

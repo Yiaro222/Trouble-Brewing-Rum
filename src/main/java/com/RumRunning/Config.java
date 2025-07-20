@@ -1,6 +1,8 @@
+
 package com.RumRunning;
 
 import java.awt.Color;
+
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
@@ -18,58 +20,67 @@ extends          net.runelite.client.config.Config
 		name            = "General Settings",
 		description     = "",
 		position        = 0,
-		closedByDefault = false
+		closedByDefault = true
 	)
 	String GeneralSection = "General Settings";
 	
 	@ConfigSection
 	(
-		name            = "Boilers",
-		description     = "Boiler options.",
+		name            = "Lobby Settings",
+		description     = "",
 		position        = 1,
 		closedByDefault = true
 	)
-	String BoilerSection = "Boiler Settings";
+	String LobbySection = "Lobby Settings";
 	
 	@ConfigSection
 	(
-		name            = "Menu Entry Swap Options",
+		name            = "Interfaces",
 		description     = "",
 		position        = 2,
 		closedByDefault = true
 	)
-	String MESSection = "MES";
+	String InterfaceSection = "Interfaces";
+	
+	@ConfigSection
+	(
+		name            = "Menu Entry Swapper",
+		description     = "",
+		position        = 3,
+		closedByDefault = true
+	)
+	String MESSection = "Menu Entry Swapper";
 	
 	@ConfigSection
 	(
 		name            = "Resource Gathering",
 		description     = "",
-		position        = 3,
+		position        = 4,
 		closedByDefault = true
 	)
 	String ResourceSection = "Resoure Gathering";
 	
 	@ConfigSection
 	(
-		name            = "Sabotage",
-		description     = "Sabotage Options",
-		position        = 1,
+		name            = "Sabotage Settings",
+		description     = "",
+		position        = 5,
 		closedByDefault = true
 	)
-	String SaboSection = "Sabo";
+	String SaboSection = "Sabotage Settings";
 	
 	@ConfigSection
 	(
-		name            = "Lobby",
+		name            = "Boiler Settings",
 		description     = "",
-		position        = 2,
-		closedByDefault = false
+		position        = 6,
+		closedByDefault = true
 	)
-	String LobbySection = "Lobby";
+	String BoilerSection = "Boiler Settings";
 	
 	
 	
-	//############################   Config Items   ############################
+	//############### Config Items[0]: General Settings Section   ###############
 	
 	@ConfigItem
 	(
@@ -114,7 +125,7 @@ extends          net.runelite.client.config.Config
 	(
 		keyName     = "FontColour",
 		name        = "Font Colour",
-		description = "Used for the boiler's font.",
+		description = "",
 		position    = 3,
 		section     = GeneralSection
 	)
@@ -125,286 +136,15 @@ extends          net.runelite.client.config.Config
 	
 	
 	
-	@ConfigItem
-	(
-		keyName     = "DisplayBoilerIcons",
-		name        = "Boiler Icons",
-		position    = 0,
-		description = "Display Log/Tinderbox icons over Boilers.",
-		section     = BoilerSection
-	)
-	default boolean displayBoilerIcons()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayBoilerLogCount",
-		name        = "Boiler Log Count",
-		position    = 1,
-		description = "Display log count over boilers.",
-		section     = BoilerSection
-	)
-	default boolean displayBoilerLogCount()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "OutlineBoilers",
-		name        = "Outline Boilers",
-		position    = 2,
-		description = "Draws a coloured outline around the boilers depending on " +
-		              " their log count.",
-		section     = BoilerSection
-	)
-	default boolean displayBoilerOutline()
-	{
-		return true;
-	}
-	
-	
-	
-	@ConfigItem
-	(
-		keyName     = "DisplaySaboOutline",
-		name        = "Outline Sabotaged Objects",
-		position    = 0,
-		description = "",
-		section     = SaboSection
-	)
-	default boolean displaySaboOutline()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplaySaboRepairItems",
-		name        = "Repair Items",
-		position    = 1,
-		description = "",
-		section     = SaboSection
-	)
-	default boolean displayRepairItems()
-	{
-		return true;
-	}
-	
-	
-	
-	@ConfigItem
-	(
-		keyName     = "MES",
-		name        = "Enable",
-		position    = 0,
-		description = "Left click swaps",
-		section     = MESSection
-	)
-	default boolean enableMES()
-	{
-		return true;
-	}
-	
-	
-	
-	@ConfigItem
-	(
-		keyName     = "EnableScrapeyTreeInfo",
-		name        = "Enable Scrapey Tree Info",
-		position    = 0,
-		description = "Adds outlines and spawn timers",
-		section     = ResourceSection
-	)
-	default boolean enableTreeInfo()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "EnableSweetgrubInfo",
-		name        = "Enable Sweetgrub Info",
-		position    = 1,
-		description = "Adds outlines to mounds and aggression zone for sweetgrubs",
-		section     = ResourceSection
-	)
-	default boolean enableSweetgrubInfo()
-	{
-		return true;
-	}
-	
-	
-	
-	@ConfigItem
-	(
-		keyName     = "contentTop",
-		name        = "Hide Default Resource UI",
-		description = "",
-		position    = 2,
-		section     = GeneralSection
-	)
-	default boolean hideContentTop()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "contentLeft",
-		name        = "Hide Default Sabo UI",
-		description = "",
-		position    = 3,
-		section     = GeneralSection
-	)
-	
-	default boolean hideContentLeft()
-	{
-		return true;
-	}
-	@ConfigItem
-	(
-		keyName     = "contentRight",
-		name        = "Hide Default Ingame Ribbon UI",
-		description = "",
-		position    = 4,
-		section     = GeneralSection
-	)
-	default boolean hideContentRight()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "LobbyHUD",
-		name        = "Enable",
-		description = "Toggle for all Lobby UI options.",
-		position    = 0,
-		section     = LobbySection
-	)
-	default boolean enableLobbyHUD()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayTimer",
-		name        = "Timer",
-		description = "A timer which includes seconds (when known) and shows the " +
-		              "correct time until next game.",
-		position    = 1,
-		section     = LobbySection
-	)
-	default boolean displayTimer()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayEight",
-		name        = "Eight Count",
-		description = "Shows current Pieces of Eight count while in Lobby.",
-		position    = 2,
-		section     = LobbySection
-	)
-	default boolean displayEight()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayRemainder",
-		name        = "Remaining Eight",
-		description = "Show remaining eight needed until green log. You may need to" +
-		              "open your Trouble Brewing collection log for this to be accurate.",
-		position    = 3,
-		section     = LobbySection
-	)
-	default boolean displayRemainder()
-	{
-		return false;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "HideDefaultUI",
-		name        = "Hide Default UI",
-		description = "Hide the default ribbon UI.",
-		position    = 4,
-		section     = LobbySection
-	)
-	default boolean hideDefaultWidget()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "HideLobbyUI",
-		name        = "Hide Lobby UI",
-		description = "Hide the default lobby ribbon UI.",
-		position    = 5,
-		section     = LobbySection
-	)
-	default boolean hideLobbyWidget()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayAxeReminder",
-		name        = "Axe Reminder",
-		description = "Show a reminder to bring an Axe.",
-		position    = 6,
-		section     = LobbySection
-	)
-	default boolean displayAxeReminder()
-	{
-		return true;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayMSpeakReminder",
-		name        = "M'Speak Reminder",
-		description = "Useful when running nuts. Only displays if MM2 is not completed.",
-		position    = 7,
-		section     = LobbySection
-	)
-	default boolean displayMSpeakAmuletReminder()
-	{
-		return false;
-	}
-	
-	@ConfigItem
-	(
-		keyName     = "DisplayFirstIngredientTimes",
-		name        = "Ingredient Timers",
-		description = "Timestamps for when the required amount of a resource to " +
-		              "make a rum has been deposited. Only displays if player "   +
-		              "joined at the start of the game.",
-		position    = 2,
-		section     = ResourceSection
-	)
-	default boolean displayIngredientTimes()
-	{
-		return true;
-	}
+	//############### Config Items[1]: Lobby Settings Section     ###############
 	
 	@ConfigItem
 	(
 		keyName     = "RedTeamHatType",
 		name        = "Red Team Hat Type",
-		description = "Can cause temporary baldness",
-		position    = 5,
-		section     = GeneralSection
+		description = "May cause temporary baldness",
+		position    = 0,
+		section     = LobbySection
 	)
 	default RedTeamHatType redTeamHatType()
 	{
@@ -416,8 +156,8 @@ extends          net.runelite.client.config.Config
 		keyName     = "BlueTeamHatType",
 		name        = "Blue Team Hat Type",
 		description = "",
-		position    = 6,
-		section     = GeneralSection
+		position    = 1,
+		section     = LobbySection
 	)
 	default BlueTeamHatType blueTeamHatType()
 	{
@@ -426,9 +166,156 @@ extends          net.runelite.client.config.Config
 	
 	@ConfigItem
 	(
+		keyName     = "DisplayAxeReminder",
+		name        = "Axe Reminder",
+		description = "Show a reminder to bring an Axe.",
+		position    = 2,
+		section     = LobbySection
+	)
+	default boolean displayAxeReminder()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayMSpeakReminder",
+		name        = "M'Speak Reminder",
+		description = "Useful when running nuts. Only displays if MM2 is not " +
+		              "completed.",
+		position    = 3,
+		section     = LobbySection
+	)
+	default boolean displayMSpeakAmuletReminder()
+	{
+		return false;
+	}
+	
+	
+	
+	//############### Config Items[2]: Interfaces Section         ###############
+	
+	@ConfigItem
+	(
+		keyName     = "MinigameHUD",
+		name        = "Minigame UI",
+		description = "",
+		position    = 0,
+		section     = InterfaceSection
+	)
+	default boolean enableMinigameHUD()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayFirstIngredientTimes",
+		name        = "Display Deposit Timers",
+		description = "Timestamps for when the required amount of a resource to " +
+		              "make a rum has been deposited. Only displays if player "   +
+		              "joined at the start of the game.",
+		position    = 1,
+		section     = InterfaceSection
+	)
+	default boolean displayIngredientTimes()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "ColourMaxResources",
+		name        = "Display Adequate Resources",
+		description = "Turns resource counts green when adequate resources have " +
+		              "been reached. This assumes each rum takes 40 secs to brew "+
+		              " (it's usually less)",
+		position    = 2,
+		section     = InterfaceSection
+	)
+	default boolean colourMaxResources()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "HideDefaultUI",
+		name        = "Hide Default UI",
+		description = "",
+		position    = 3,
+		section     = InterfaceSection
+	)
+	default boolean hideDefaultMinigameUI()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "LobbyHUD",
+		name        = "Lobby UI",
+		description = "",
+		position    = 4,
+		section     = InterfaceSection
+	)
+	default boolean enableLobbyHUD()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayRemainder",
+		name        = "Remaining Eight",
+		description = "Show remaining eight needed until green log. You may " +
+		              "need to open your Trouble Brewing collection log for " +
+		              "this to be accurate.",
+		position    = 5,
+		section     = InterfaceSection
+	)
+	default boolean displayRemainder()
+	{
+		return false;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "LobbyHideDefaultUI",
+		name        = "Hide Default UI",
+		description = "Hide the default lobby ribbon UI",
+		position    = 6,
+		section     = InterfaceSection
+	)
+	default boolean hideDefaultLobbyUI()
+	{
+		return true;
+	}
+	
+	
+	
+	//############### Config Items[3]: Menu Entry Swapper Section ###############
+	
+	@ConfigItem
+	(
+		keyName     = "EnableMES",
+		name        = "Misclick Prevention",
+		description = "Prevents certain items like monkeys and flowers from being " +
+		              "used on easily misclickable things such as trees and players",
+		position    = 0,
+		section     = MESSection
+	)
+	default boolean enableMES()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
 		keyName     = "SwapJoinCrewOptions",
 		name        = "Swap Join Options",
-		description = "Swaps San Fan and Fancy Dan's left click option to Join-Crew, and swaps the door option while outside the lobby.",
+		description = "Swaps San Fan and Fancy Dan's left click option to Join-" +
+		              "Crew, and swaps the door option while outside the lobby.",
 		position    = 1,
 		section     = MESSection
 	)
@@ -489,15 +376,158 @@ extends          net.runelite.client.config.Config
 		return true;
 	}
 	
+	
+	
+	//############### Config Items[4]: Resource Gathering Section ###############
+	
 	@ConfigItem
 	(
-		keyName     = "DontUseOnPlayer",
-		name        = "Use-On-Player Prevention",
-		description = "Prevent certain items from being used on players",
-		position    = 6,
-		section     = MESSection
+		keyName     = "EnableScrapeyTree",
+		name        = "Enable Scrapey Tree",
+		position    = 0,
+		description = "Adds outlines and spawn timers",
+		section     = ResourceSection
 	)
-	default boolean dontUseOnPlayer()
+	default boolean enableTreeInfo()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "EnableSweetgrub",
+		name        = "Enable Sweetgrub",
+		position    = 1,
+		description = "Adds outlines to mounds and aggression zone for sweetgrubs",
+		section     = ResourceSection
+	)
+	default boolean enableSweetgrubInfo()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "TreeOutlineColour",
+		name        = "Tree Active",
+		description = "",
+		position    = 2,
+		section     = ResourceSection
+	)
+	default Color treeActiveColour()
+	{
+		return Color.GREEN;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "TreeStumpOutlineColour",
+		name        = "Tree Inactive",
+		description = "Tree stump outline colour",
+		position    = 3,
+		section     = ResourceSection
+	)
+	default Color treeInactiveColour()
+	{
+		return Color.RED;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "MoundOutlineColour",
+		name        = "Sweetgrub Mound Active",
+		description = "",
+		position    = 4,
+		section     = ResourceSection
+	)
+	default Color sweetgrubMoundActiveColour()
+	{
+		return Color.GREEN;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "MoundOutlineColour",
+		name        = "Sweetgrub Mound Inactive",
+		description = "",
+		position    = 5,
+		section     = ResourceSection
+	)
+	default Color sweetgrubMoundInactiveColour()
+	{
+		return Color.RED;
+	}
+	
+	
+	
+	//############### Config Items[5]: Sabotage Settings Section  ###############
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboOutline",
+		name        = "Outline Sabotaged Objects",
+		position    = 0,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displaySaboOutline()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplaySaboRepairItems",
+		name        = "Display Required Repair Items",
+		position    = 1,
+		description = "",
+		section     = SaboSection
+	)
+	default boolean displayRepairItems()
+	{
+		return true;
+	}
+	
+	
+	
+	//############### Config Items[6]: Boiler Settings Section    ###############
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayBoilerIcons",
+		name        = "Boiler Icons",
+		position    = 0,
+		description = "Display Log/Tinderbox icons over Boilers.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerIcons()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "DisplayBoilerLogCount",
+		name        = "Boiler Log Count",
+		position    = 1,
+		description = "Display log count over boilers.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerLogCount()
+	{
+		return true;
+	}
+	
+	@ConfigItem
+	(
+		keyName     = "OutlineBoilers",
+		name        = "Outline Boilers",
+		position    = 2,
+		description = "Draws a coloured outline around the boilers depending on " +
+		              " their log count.",
+		section     = BoilerSection
+	)
+	default boolean displayBoilerOutline()
 	{
 		return true;
 	}

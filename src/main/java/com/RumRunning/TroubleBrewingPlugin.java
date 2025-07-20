@@ -5,8 +5,6 @@ import javax.inject.Inject;
 
 import com.google.inject.Provides;
 
-import lombok.extern.slf4j.Slf4j;
-
 import net.runelite.api.Client;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
@@ -28,7 +26,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 
 
 
-@Slf4j
 @PluginDescriptor(
 	name = "Trouble Brewing Rum"
 )
@@ -70,7 +67,6 @@ extends      Plugin
 	protected void
 	startUp() throws Exception
 	{
-		log.info(" ##### Plugin started! ##### ");
 		overlayManager.add(utils);
 		overlayManager.add(boiler);
 		overlayManager.add(grubOverlay);
@@ -90,7 +86,6 @@ extends      Plugin
 	protected void
 	shutDown() throws Exception
 	{
-		log.info(" ##### Plugin stopped! ##### ");
 		overlayManager.remove(boiler);
 		overlayManager.remove(barkOverlay);
 		overlayManager.remove(grubOverlay);

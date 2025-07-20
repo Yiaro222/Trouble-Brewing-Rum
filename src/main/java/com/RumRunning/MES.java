@@ -43,7 +43,7 @@ public class MES
 	);
 	private final List<String>  hideItemNames = List.of
 	(
-		"Jungle Grass", "Plant", "Jungle tree"
+		"Jungle Grass", "Jungle tree"
 	);
 	
 	
@@ -108,8 +108,7 @@ public class MES
 					continue;
 				}
 			}
-			else if (defaultLayout[i].getType() == MenuAction.WIDGET_TARGET_ON_PLAYER &&
-			         config.dontUseOnPlayer())
+			else if (defaultLayout[i].getType() == MenuAction.WIDGET_TARGET_ON_PLAYER)
 			{
 				continue;
 			}

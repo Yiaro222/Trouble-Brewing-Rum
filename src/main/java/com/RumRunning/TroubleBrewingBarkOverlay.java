@@ -79,7 +79,7 @@ extends      Overlay
 				                                config,
 				                                scrapyTrees[i],
 				                                config.highlightType(),
-				                                Color.GREEN);
+				                                config.treeActiveColour());
 			}
 			else if (scrapyTrees[i].getId() == ObjectID.BREW_SCRAPEY_TREE_STUMP)
 			{
@@ -88,7 +88,7 @@ extends      Overlay
 				                                config,
 				                                scrapyTrees[i],
 				                                config.highlightType(),
-				                                Color.RED);
+				                                config.treeInactiveColour());
 				
 				if (startTime == 0 || currTime >= endTime)
 				{

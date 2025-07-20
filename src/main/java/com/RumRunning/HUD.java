@@ -18,8 +18,6 @@ import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
-import lombok.extern.slf4j.Slf4j;
-
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -54,7 +52,14 @@ import net.runelite.client.util.ImageUtil;
 
 
 
-@Slf4j
+/* Issues:
+ * > I once left via the portal and it didn't reset the timer (idk how this is
+ *   even possible tbh) but I haven't managed to replicate this
+ * > When the player buys an item from the shop and gets a new collection log,
+ *   this isn't checked for, the player has to manually open their clog again
+ *   to sync with the plugin
+ *  */
+
 public class HUD
 extends      OverlayPanel
 {
@@ -1049,6 +1054,33 @@ extends      OverlayPanel
 		
 		final boolean active = varbits.loads_available > 0 ? true : false;
 		
+		/* Draw default UIs if they're enabled */
+		{
+			Widget widget;
+			
+			/* Content Top   - boilers and ingrediets (hides the exact same as
+			 *                 InterfaceID.BrewOverlay.INGREDIENTS_AND_BOILERS) */
+			/* Content Left  - Sabo icons */
+			/* Content Right - Ribbon UI  */
+			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_TOP)) != null)
+			{
+				widget.setHidden(config.hideDefaultMinigameUI());
+				widget.revalidate();
+			}
+			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_LEFT)) != null)
+			{
+				widget.setHidden(config.hideDefaultMinigameUI());
+				widget.revalidate();
+			}
+			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_RIGHT)) != null)
+			{
+				widget.setHidden(config.hideDefaultMinigameUI());
+				widget.revalidate();
+			}
+		}
+		
+		if (!config.enableMinigameHUD()) return(null);
+		
 		totalSecs = timer.mins * 60 + (int) timer.secs;
 		if (active && timers.rum != null)
 		{
@@ -1128,7 +1160,11 @@ extends      OverlayPanel
 		panelComponent.getChildren().add(LineComponent.builder().left("").build());
 		
 		colour = Color.WHITE;
-		if (defaultWidgetValues.curr_ingame_state.bitternut >= RR) colour = Color.GREEN;
+		if (defaultWidgetValues.curr_ingame_state.bitternut >= RR &&
+		    config.colourMaxResources())
+		{
+			colour = Color.GREEN;
+		}
 		icon = GetIcon(ItemID.BREW_BITTERNUT, "");
 		msg  = "";
 		if (config.displayIngredientTimes() && !timers.bitternut_timestamp.isEmpty())
@@ -1143,7 +1179,11 @@ extends      OverlayPanel
 		              .build());
 		
 		colour = Color.WHITE;
-		if (defaultWidgetValues.curr_ingame_state.sweetgrub >= RR) colour = Color.GREEN;
+		if (defaultWidgetValues.curr_ingame_state.sweetgrub >= RR &&
+		    config.colourMaxResources())
+		{
+			colour = Color.GREEN;
+		}
 		icon = GetIcon(ItemID.BREW_SWEETGRUBS, "");
 		msg  = "";
 		if (config.displayIngredientTimes() && !timers.sweetgrub_timestamp.isEmpty())
@@ -1158,7 +1198,11 @@ extends      OverlayPanel
 		              .build());
 		
 		colour = Color.WHITE;
-		if (defaultWidgetValues.curr_ingame_state.coloured_water / 3 >= RR) colour = Color.GREEN;
+		if (defaultWidgetValues.curr_ingame_state.coloured_water / 3 >= RR &&
+		    config.colourMaxResources())
+		{
+			colour = Color.GREEN;
+		}
 		if (Utils.onRedTeam(client)) icon = GetIcon(ItemID.BREW_BOWL_RED, "");
 		else                         icon = GetIcon(ItemID.BREW_BOWL_BLUE, "");
 		msg = "";
@@ -1174,7 +1218,11 @@ extends      OverlayPanel
 		              .build());
 		
 		colour = Color.WHITE;
-		if (defaultWidgetValues.curr_ingame_state.scrapey_bark >= RR) colour = Color.GREEN;
+		if (defaultWidgetValues.curr_ingame_state.scrapey_bark >= RR &&
+		    config.colourMaxResources())
+		{
+			colour = Color.GREEN;
+		}
 		icon = GetIcon(ItemID.BREW_SCRAPEY_BARK, "");
 		msg  = "";
 		if (config.displayIngredientTimes() && !timers.scrapey_bark_timestamp.isEmpty())
@@ -1189,7 +1237,11 @@ extends      OverlayPanel
 		              .build());
 		
 		colour = Color.WHITE;
-		if (defaultWidgetValues.curr_ingame_state.water_bucket / 5 >= RR) colour = Color.GREEN;
+		if (defaultWidgetValues.curr_ingame_state.water_bucket / 5 >= RR &&
+		    config.colourMaxResources())
+		{
+			colour = Color.GREEN;
+		}
 		icon = GetIcon(ItemID.BUCKET_WATER, "");
 		msg  = "";
 		if (config.displayIngredientTimes() && !timers.water_bucket_timestamp.isEmpty())
@@ -1244,17 +1296,10 @@ extends      OverlayPanel
 				
 				if (seconds > 20)
 				{
-					log.debug("Rum took " + seconds + " seconds to create");
-					
-					log.info("Stopping timers.rum");
 					timers.rum = null;
 				}
 			}
-			else
-			{
-				log.info("RUM PRODUCED BUT TIMER WASN'T RUNNING");
-				/* This is fine tbh */
-			}
+			
 			varbits.rum_varbit_triggered = false;
 		}
 		
@@ -1265,7 +1310,6 @@ extends      OverlayPanel
 			mins = Duration.between(timers.rum, Instant.now()).toMinutes();
 			if (mins > 1)
 			{
-				log.info("timers.rum is dead, stopping timer");
 				timers.rum = null;
 			}
 		}
@@ -1274,28 +1318,11 @@ extends      OverlayPanel
 		{
 			if (timers.rum != null)
 			{
-				log.info("timers.rum already running!!!");
 			}
 			else
 			{
 				timers.rum = Instant.now();
-				log.info("timers.rum started");
 			}
-		}
-		
-		{
-			Widget widget;
-			
-			/* Content Top   - boilers and ingrediets (hides the exact same as
-			 *                 InterfaceID.BrewOverlay.INGREDIENTS_AND_BOILERS) */
-			/* Content Left  - Sabo icons */
-			/* Content Right - Ribbon UI  */
-			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_TOP))   != null) widget.setHidden(!config.hideContentTop());
-			if (widget != null) widget.revalidate();
-			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_LEFT))  != null) widget.setHidden(!config.hideContentLeft());
-			if (widget != null) widget.revalidate();
-			if ((widget = client.getWidget(InterfaceID.BrewOverlay.CONTENT_RIGHT)) != null) widget.setHidden(!config.hideContentRight());
-			if (widget != null) widget.revalidate();
 		}
 		
 		return(super.render(graphics));
@@ -1308,10 +1335,12 @@ extends      OverlayPanel
 		ImageComponent icon;
 		Widget         widget;
 		
+		if (!config.enableLobbyHUD()) return(null);
+		
 		if ((widget = client.getWidget(InterfaceID.BrewWaitingRoomOverlay.CONTENTS))
 		    != null)
 		{
-			widget.setHidden(!config.hideLobbyWidget());
+			widget.setHidden(config.hideDefaultLobbyUI());
 			widget.revalidate();
 		}
 		
@@ -1484,16 +1513,10 @@ extends      OverlayPanel
 			return;
 		}
 		
-		if ((itemWidgets = tbClogWidget.getChildren()) == null)// return;
-		{
-			return;
-		}
+		if ((itemWidgets = tbClogWidget.getChildren()) == null) return;
 		
 		/* Not on tb tab */
-		if (!Rewards.Shop.containsID(itemWidgets[0].getItemId()))// return;
-		{
-			return;
-		}
+		if (!Rewards.Shop.containsID(itemWidgets[0].getItemId())) return;
 		
 		rewards.clogs.clear();
 		
