@@ -1,7 +1,6 @@
 
 package com.RumRunning;
 
-import ch.qos.logback.core.joran.spi.ConsoleTarget;
 import net.runelite.api.Client;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.events.GameTick;
