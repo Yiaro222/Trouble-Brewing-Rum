@@ -383,7 +383,7 @@ extends          net.runelite.client.config.Config
 	@ConfigItem
 	(
 		keyName     = "EnableScrapeyTree",
-		name        = "Enable Scrapey Tree",
+		name        = "Outline Scrapey Tree",
 		position    = 0,
 		description = "Adds outlines and spawn timers",
 		section     = ResourceSection
@@ -396,7 +396,7 @@ extends          net.runelite.client.config.Config
 	@ConfigItem
 	(
 		keyName     = "EnableSweetgrub",
-		name        = "Enable Sweetgrub",
+		name        = "Outline Sweetgrub",
 		position    = 1,
 		description = "Adds outlines to mounds and aggression zone for sweetgrubs",
 		section     = ResourceSection
@@ -447,7 +447,7 @@ extends          net.runelite.client.config.Config
 	
 	@ConfigItem
 	(
-		keyName     = "MoundOutlineColour",
+		keyName     = "MoundInactiveOutlineColour",
 		name        = "Sweetgrub Mound Inactive",
 		description = "",
 		position    = 5,

@@ -75,10 +75,11 @@ class Headgear
 			{
 				if (config.redTeamHatType() == Config.RedTeamHatType.DEFAULT)
 				{
-					if (redSideDefaultUnchanged) return;
-					
-					kit[headID] = rHatID + offset;
-					kit[hairID] = male ? hatBaldM : hatBaldF;
+					if (!redSideDefaultUnchanged)
+					{
+						kit[headID] = rHatID + offset;
+						kit[hairID] = male ? hatBaldM : hatBaldF;
+					}
 				}
 				else if (config.redTeamHatType() == Config.RedTeamHatType.BANDANA)
 				{
